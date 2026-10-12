@@ -1,0 +1,41 @@
+{
+  "app": { "name": "Virtual Doctor" },
+  "nav": {
+    "dashboard": "Dashboard",
+    "patients": "Patients",
+    "appointments": "Appointments",
+    "followups": "Follow-ups",
+    "settings": "Settings"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "failed": "Invalid email or password"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "today": "Today",
+    "waiting": "Waiting",
+    "seen": "Seen",
+    "followupsDue": "Follow-ups Due",
+    "queue": "Today's Queue"
+  },
+  "patients": {
+    "title": "Patients",
+    "search": "Name / Phone / ID",
+    "new": "New Patient",
+    "id": "ID",
+    "name": "Name",
+    "ageSex": "Age/Sex",
+    "phone": "Phone",
+    "registered": "Registered",
+    "empty": "No patients found",
+    "duplicates": "Possible existing patient",
+    "createAnyway": "Create new anyway",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "common": { "comingSoon": "Coming soon", "loading": "Loading…", "prev": "Previous", "next": "Next" }
+}

@@ -1,0 +1,41 @@
+{
+  "app": { "name": "ভার্চুয়াল ডক্টর" },
+  "nav": {
+    "dashboard": "ড্যাশবোর্ড",
+    "patients": "রোগী",
+    "appointments": "অ্যাপয়েন্টমেন্ট",
+    "followups": "ফলো-আপ",
+    "settings": "সেটিংস"
+  },
+  "auth": {
+    "login": "লগইন",
+    "logout": "লগআউট",
+    "email": "ইমেইল",
+    "password": "পাসওয়ার্ড",
+    "failed": "ইমেইল বা পাসওয়ার্ড ভুল"
+  },
+  "dashboard": {
+    "title": "ড্যাশবোর্ড",
+    "today": "আজ",
+    "waiting": "অপেক্ষমাণ",
+    "seen": "দেখা হয়েছে",
+    "followupsDue": "ফলো-আপ বাকি",
+    "queue": "আজকের সিরিয়াল"
+  },
+  "patients": {
+    "title": "রোগী",
+    "search": "নাম / ফোন / আইডি",
+    "new": "নতুন রোগী",
+    "id": "আইডি",
+    "name": "নাম",
+    "ageSex": "বয়স/লিঙ্গ",
+    "phone": "ফোন",
+    "registered": "নিবন্ধন",
+    "empty": "কোনো রোগী পাওয়া যায়নি",
+    "duplicates": "সম্ভাব্য পুরনো রোগী",
+    "createAnyway": "তবুও নতুন তৈরি করুন",
+    "save": "সংরক্ষণ",
+    "cancel": "বাতিল"
+  },
+  "common": { "comingSoon": "শীঘ্রই আসছে", "loading": "লোড হচ্ছে…", "prev": "আগের", "next": "পরের" }
+}

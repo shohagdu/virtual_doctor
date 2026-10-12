@@ -1,0 +1,18 @@
+# Development: only MySQL 9.7 in Docker; run backend and frontend natively.
+# docker compose -f docker-compose.dev.yml up -d
+services:
+  mysql:
+    image: mysql:9.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: virtual_doctor
+      MYSQL_USER: vd
+      MYSQL_PASSWORD: vd_dev_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-dev-data:/var/lib/mysql
+      - ./deploy/mysql/my.cnf:/etc/mysql/conf.d/vd.cnf:ro
+
+volumes:
+  mysql-dev-data:

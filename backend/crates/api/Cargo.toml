@@ -1,0 +1,22 @@
+[package]
+name = "vd-api"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+axum = "0.8.9"
+chrono = "0.4.45"
+dotenvy = "0.15.7"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+tokio = { version = "1.53.2", features = ["full"] }
+tower-http = { version = "0.7.1", features = ["cors", "trace", "request-id", "timeout", "limit", "compression-gzip", "util"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+vd-ai = { version = "0.1.0", path = "../ai" }
+vd-common = { version = "0.1.0", path = "../common" }
+vd-db = { version = "0.1.0", path = "../db" }
+vd-domain = { version = "0.1.0", path = "../domain" }
+vd-jobs = { version = "0.1.0", path = "../jobs" }

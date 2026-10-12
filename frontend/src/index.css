@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Hind Siliguri', ui-sans-serif, system-ui, sans-serif;
+  /* Palette matching the existing prescription screen */
+  --color-infobar: #e8f3fc;
+  --color-panel: #f1f3f5;
+  --color-brand: #1d6fb8;
+}
+
+body {
+  @apply bg-slate-100 text-slate-800;
+}

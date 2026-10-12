@@ -1,0 +1,59 @@
+# Production-style stack (Patient_Management_Spec §8.6).
+# Usage: cp .env.example .env && edit secrets, then `docker compose up -d --build`.
+services:
+  mysql:
+    image: mysql:9.7
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./deploy/mysql/my.cnf:/etc/mysql/conf.d/vd.cnf:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      retries: 10
+    # Not published to the host: only the backend can reach it.
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+      BIND_ADDR: 0.0.0.0:8080
+      STORAGE_DIR: /data/storage
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  nginx:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      - backend
+
+  backup:
+    image: mysql:9.7
+    restart: unless-stopped
+    entrypoint: ["/backup.sh"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - ./deploy/backup.sh:/backup.sh:ro
+      - ./backups:/backups
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+  storage:
