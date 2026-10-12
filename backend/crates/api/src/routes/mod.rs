@@ -1,8 +1,10 @@
+mod admin;
 mod ai;
 mod analysis;
 mod appointments;
 mod auth;
 mod bills;
+mod documents;
 mod followups;
 mod health;
 mod me;
@@ -13,10 +15,11 @@ mod queue;
 mod reports;
 mod settings;
 mod summary;
+mod templates;
 mod visits;
 
 use axum::Router;
-use axum::routing::{get, patch, post, put};
+use axum::routing::{delete, get, patch, post, put};
 
 use crate::state::AppState;
 
@@ -99,7 +102,26 @@ pub fn router(state: AppState) -> Router {
             "/visits/{id}/prescription/lock",
             post(visits::lock_prescription),
         )
-        .route("/medicines/search", get(medicines::search));
+        .route("/medicines/search", get(medicines::search))
+        .route("/medicines/catalogue", get(medicines::catalogue))
+        .route("/medicines/import", post(medicines::import))
+        .route("/rx-templates", get(templates::list).post(templates::save))
+        .route("/rx-templates/{id}", delete(templates::delete))
+        .route(
+            "/medicine-favorites",
+            get(templates::favorites).post(templates::add_favorite),
+        )
+        .route(
+            "/medicine-favorites/{id}",
+            delete(templates::delete_favorite),
+        )
+        .route(
+            "/visits/{id}/documents",
+            get(documents::for_visit).post(documents::create),
+        )
+        .route("/patients/{id}/bills", get(bills::for_patient))
+        .route("/admin/patients/merge", post(admin::merge))
+        .route("/admin/patients/merge-preview", get(admin::preview));
 
     Router::new()
         .route("/health", get(health::health))

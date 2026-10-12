@@ -96,3 +96,15 @@ pub async fn collection(
         rows,
     }))
 }
+
+/// A patient's bills (profile Billing tab). Everyone who collects fees can see them.
+pub async fn for_patient(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(patient_id): Path<u64>,
+) -> AppResult<Json<Vec<CollectionRow>>> {
+    let rows = vd_db::bills::for_patient(&state.pool, user.clinic_id, patient_id)
+        .await
+        .map_err(AppError::internal)?;
+    Ok(Json(rows))
+}

@@ -25,9 +25,11 @@ pub async fn search(
     }
     let mut out: Vec<MedicineSuggestion> = sqlx::query_as(
         "SELECT id AS medicine_id, brand, generic, strength, form FROM medicines
-         WHERE is_active = 1 AND (brand LIKE CONCAT(?, '%') OR generic LIKE CONCAT(?, '%'))
+         WHERE is_active = 1 AND (clinic_id IS NULL OR clinic_id = ?)
+           AND (brand LIKE CONCAT(?, '%') OR generic LIKE CONCAT(?, '%'))
          ORDER BY brand, strength LIMIT ?",
     )
+    .bind(clinic_id)
     .bind(q)
     .bind(q)
     .bind(limit as u32)
@@ -77,6 +79,7 @@ pub async fn fill_generics(
             "SELECT generic FROM (
                 SELECT generic, 0 AS rank_ FROM medicines
                  WHERE brand = ? AND is_active = 1 AND generic <> ''
+                   AND (clinic_id IS NULL OR clinic_id = ?)
                 UNION ALL
                 SELECT pm.generic, 1 FROM prescription_medicines pm
                  JOIN prescriptions p ON p.id = pm.prescription_id
@@ -86,10 +89,76 @@ pub async fn fill_generics(
         )
         .bind(brand)
         .bind(clinic_id)
+        .bind(clinic_id)
         .bind(brand)
         .fetch_optional(pool)
         .await?;
         line.generic = generic;
     }
     Ok(())
+}
+
+/// Adds or updates a clinic's catalogue rows (roadmap 2.2), matched on brand and
+/// strength. Returns (added, updated).
+pub async fn import(
+    pool: &MySqlPool,
+    clinic_id: u64,
+    rows: &[vd_domain::catalogue::CatalogueRow],
+) -> DbResult<(usize, usize)> {
+    let mut tx = pool.begin().await?;
+    let (mut added, mut updated) = (0, 0);
+    for r in rows {
+        let existing: Option<u64> = sqlx::query_scalar(
+            "SELECT id FROM medicines WHERE clinic_id = ? AND brand = ? AND strength <=> ? LIMIT 1",
+        )
+        .bind(clinic_id)
+        .bind(&r.brand)
+        .bind(&r.strength)
+        .fetch_optional(&mut *tx)
+        .await?;
+        match existing {
+            Some(id) => {
+                sqlx::query(
+                    "UPDATE medicines SET generic = ?, form = ?, company = ?, price = ?, is_active = 1 WHERE id = ?",
+                )
+                .bind(&r.generic)
+                .bind(&r.form)
+                .bind(&r.company)
+                .bind(r.price)
+                .bind(id)
+                .execute(&mut *tx)
+                .await?;
+                updated += 1;
+            }
+            None => {
+                sqlx::query(
+                    "INSERT INTO medicines (clinic_id, brand, generic, strength, form, company, price)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)",
+                )
+                .bind(clinic_id)
+                .bind(&r.brand)
+                .bind(&r.generic)
+                .bind(&r.strength)
+                .bind(&r.form)
+                .bind(&r.company)
+                .bind(r.price)
+                .execute(&mut *tx)
+                .await?;
+                added += 1;
+            }
+        }
+    }
+    tx.commit().await?;
+    Ok((added, updated))
+}
+
+/// Catalogue size: the clinic's own rows and the shared ones.
+pub async fn catalogue_size(pool: &MySqlPool, clinic_id: u64) -> DbResult<(i64, i64)> {
+    sqlx::query_as(
+        "SELECT CAST(COALESCE(SUM(clinic_id = ?), 0) AS SIGNED), CAST(COALESCE(SUM(clinic_id IS NULL), 0) AS SIGNED)
+         FROM medicines WHERE is_active = 1",
+    )
+    .bind(clinic_id)
+    .fetch_one(pool)
+    .await
 }

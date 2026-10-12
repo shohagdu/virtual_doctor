@@ -3,6 +3,8 @@
 pub mod allergy;
 pub mod appointment;
 pub mod billing;
+pub mod catalogue;
+pub mod document;
 pub mod followup;
 pub mod lab;
 pub mod medical_profile;

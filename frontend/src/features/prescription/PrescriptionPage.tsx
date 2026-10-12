@@ -14,6 +14,12 @@ import { AiSummary } from '../ai/AiSummary'
 import type { Insert } from '../reports/FindingsPanel'
 import { ReportDrawer } from '../reports/ReportDrawer'
 import { SafetyPanel } from '../reports/SafetyPanel'
+import { useAddFavorite, useFavorites } from '../rxtools/api'
+import { DocumentDialog } from '../rxtools/DocumentDialog'
+import { DoseCalculator } from '../rxtools/DoseCalculator'
+import { clearDraft, useLocalDraft } from '../rxtools/draft'
+import { FavoritesMenu } from '../rxtools/FavoritesMenu'
+import { TemplatesDrawer } from '../rxtools/TemplatesDrawer'
 import { vitalsParts } from '../vitals/format'
 import { VitalsDialog } from '../vitals/VitalsDialog'
 import { addMedicines, emptyLine } from './medicine'
@@ -87,6 +93,11 @@ function PrescriptionEditor({
   const [vitalsOpen, setVitalsOpen] = useState(false)
   const [reportsOpen, setReportsOpen] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
+  const [calcOpen, setCalcOpen] = useState(false)
+  const [docOpen, setDocOpen] = useState(false)
+  const favorites = useFavorites()
+  const addFavorite = useAddFavorite()
   const aiAvailable = useAiAvailable()
 
   const initial = useMemo(() => {
@@ -98,6 +109,7 @@ function PrescriptionEditor({
   // Copied-in medicines are unsaved changes until the doctor saves.
   const [dirty, setDirty] = useState(() => addMedicines(rx.medicines, repeatFrom).length > rx.medicines.length)
   const [allergyAck, setAllergyAck] = useState(false)
+  const draft = useLocalDraft(visit.id, rx.id, rx.revision, body, dirty)
   const set = (patch: Partial<PrescriptionBody>) => {
     setBody((b) => ({ ...b, ...patch }))
     setDirty(true)
@@ -117,6 +129,24 @@ function PrescriptionEditor({
     setDirty(true)
   }
 
+  // A template fills empty sections and adds its medicines (roadmap 2.1).
+  const applyTemplate = (tpl: PrescriptionBody) => {
+    const merge = (cur: string[], add: string[]) => [...cur, ...add.filter((x) => !cur.includes(x))]
+    setBody((b) => ({
+      ...b,
+      complaints: merge(b.complaints, tpl.complaints),
+      examination: merge(b.examination, tpl.examination),
+      investigations: merge(b.investigations, tpl.investigations),
+      diagnosis: merge(b.diagnosis, tpl.diagnosis),
+      treatment_plan: merge(b.treatment_plan, tpl.treatment_plan),
+      advice: merge(b.advice, tpl.advice),
+      next_plan: merge(b.next_plan, tpl.next_plan),
+      medicines: addMedicines(b.medicines, tpl.medicines),
+    }))
+    setDirty(true)
+    setAllergyAck(false)
+  }
+
   const copyMedicines = (copied: MedicineLine[]) => {
     set({ medicines: addMedicines(body.medicines, copied) })
     setAllergyAck(false)
@@ -134,6 +164,7 @@ function PrescriptionEditor({
 
   const doSave = async () => {
     const saved = await save.mutateAsync({ base, body, allergy_ack: allergyAck })
+    clearDraft(visit.id)
     // The repeat is done once saved; don't copy again on reload.
     if (params.has('repeat')) setParams({}, { replace: true })
     return saved
@@ -183,6 +214,12 @@ function PrescriptionEditor({
                 🤖 {t('ai.summariseHistory')}
               </button>
             )}
+            <button onClick={() => setTemplatesOpen(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
+              📋 {t('rxtools.templates')}
+            </button>
+            <button onClick={() => setDocOpen(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
+              📝 {t('rxtools.certificate')}
+            </button>
             <button onClick={() => setDrawer(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
               🕘 {t('rx.history')}
               {previous.length > 0 && ` (${previous.length})`}
@@ -223,6 +260,25 @@ function PrescriptionEditor({
             </span>
           )}
         </PatientInfoBar>
+
+        {draft.offer && (
+          <div className="flex flex-wrap items-center gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            {t('rxtools.draftFound', { time: new Date(draft.offer.at).toLocaleString() })}
+            <button
+              onClick={() => {
+                setBody(draft.offer!.body)
+                setDirty(true)
+                draft.taken()
+              }}
+              className="rounded bg-amber-600 px-2 py-0.5 text-white"
+            >
+              {t('rxtools.restore')}
+            </button>
+            <button onClick={draft.dismiss} className="rounded border border-amber-400 px-2 py-0.5">
+              {t('rxtools.discard')}
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="flex flex-wrap items-center gap-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
@@ -301,11 +357,21 @@ function PrescriptionEditor({
             <div>
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="text-2xl font-bold text-brand">℞</span>
+                <span className="ml-auto" />
+                <FavoritesMenu onAdd={(line) => copyMedicines([line])} />
+                <button
+                  type="button"
+                  onClick={() => setCalcOpen(true)}
+                  className="rounded border px-2 py-1 text-xs"
+                  title={t('rxtools.doseCalc')}
+                >
+                  🧮 {t('rxtools.doseCalcShort')}
+                </button>
                 {lastRx && (
                   <button
                     type="button"
                     onClick={() => copyMedicines(lastRx.prescription?.medicines ?? [])}
-                    className="ml-auto rounded border px-2 py-1 text-xs text-brand"
+                    className="rounded border px-2 py-1 text-xs text-brand"
                   >
                     ↻ {t('rx.repeatLast', { date: fmtDate(lastRx.visit_date) })}
                   </button>
@@ -316,6 +382,15 @@ function PrescriptionEditor({
                 onChange={(medicines) => set({ medicines })}
                 flagged={flagged}
                 readOnly={false}
+                onFavorite={(line) => addFavorite.mutate(line)}
+                isFavorite={(line) =>
+                  !!favorites.data?.some(
+                    (f) =>
+                      f.line.brand.toLowerCase() === line.brand.trim().toLowerCase() &&
+                      (f.line.strength ?? '') === (line.strength ?? '') &&
+                      (f.line.dose_pattern ?? '') === (line.dose_pattern ?? ''),
+                  )
+                }
               />
             </div>
             <SafetyPanel visitId={visit.id} medicines={body.medicines} />
@@ -354,6 +429,25 @@ function PrescriptionEditor({
           onClose={() => setDrawer(false)}
         />
       )}
+      {templatesOpen && (
+        <TemplatesDrawer
+          current={body}
+          onApply={(tpl) => {
+            applyTemplate(tpl)
+            setTemplatesOpen(false)
+          }}
+          onClose={() => setTemplatesOpen(false)}
+        />
+      )}
+      {calcOpen && (
+        <DoseCalculator
+          weight={ctx.vitals?.weight ?? null}
+          lines={body.medicines}
+          onApply={(i, notes) => set({ medicines: body.medicines.map((m, j) => (j === i ? { ...m, notes } : m)) })}
+          onClose={() => setCalcOpen(false)}
+        />
+      )}
+      {docOpen && <DocumentDialog visit={visit} patient={patient} diagnosis={body.diagnosis} onClose={() => setDocOpen(false)} />}
       {reportsOpen && (
         <ReportDrawer
           visitId={visit.id}

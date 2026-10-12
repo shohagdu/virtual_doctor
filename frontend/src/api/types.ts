@@ -475,3 +475,44 @@ export interface AiUsageRow {
   output_tokens: number
   cache_read_tokens: number
 }
+
+// ---- Remaining items: templates, favourites, documents, merge ----
+
+export interface RxTemplate {
+  id: number
+  name: string
+  body: PrescriptionBody
+  updated_at: string
+}
+
+export interface MedicineFavorite {
+  id: number
+  line: MedicineLine
+}
+
+export type DocumentKind = 'sick_leave' | 'fitness' | 'referral'
+
+export interface DocumentBody {
+  diagnosis: string | null
+  from: string | null
+  to: string | null
+  referred_to: string | null
+  reason: string | null
+  summary: string | null
+  remarks: string | null
+}
+
+export interface ClinicDocument {
+  id: number
+  visit_id: number
+  patient_id: number
+  kind: DocumentKind
+  body: DocumentBody
+  created_at: string
+}
+
+export interface MergeSide {
+  patient: Patient
+  counts: { visits: number; reports: number; appointments: number; bills: number }
+  visits: VisitSummary[]
+}

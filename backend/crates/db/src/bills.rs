@@ -175,6 +175,32 @@ struct CollectionDbRow {
     method: String,
 }
 
+impl From<CollectionDbRow> for CollectionRow {
+    fn from(r: CollectionDbRow) -> Self {
+        let total = round2(r.fee - r.discount);
+        CollectionRow {
+            bill_id: r.bill_id,
+            visit_id: r.visit_id,
+            visit_date: r.visit_date,
+            receipt_no: r.receipt_no.unwrap_or_default(),
+            patient_id: r.patient_id,
+            patient_code: r.patient_code,
+            patient_name: [r.title.as_deref(), Some(&r.name_en)]
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>()
+                .join(" "),
+            visit_type: VisitType::parse(&r.visit_type).unwrap_or_default(),
+            fee: r.fee,
+            discount: r.discount,
+            total,
+            paid: r.paid,
+            due: round2((total - r.paid).max(0.0)),
+            method: PaymentMethod::parse(&r.method).unwrap_or_default(),
+        }
+    }
+}
+
 /// Bills for visits from `from` to `to` (inclusive), for the collection report.
 pub async fn collection(
     pool: &MySqlPool,
@@ -198,30 +224,29 @@ pub async fn collection(
     .bind(to)
     .fetch_all(pool)
     .await?;
-    Ok(rows
-        .into_iter()
-        .map(|r| {
-            let total = round2(r.fee - r.discount);
-            CollectionRow {
-                bill_id: r.bill_id,
-                visit_id: r.visit_id,
-                visit_date: r.visit_date,
-                receipt_no: r.receipt_no.unwrap_or_default(),
-                patient_id: r.patient_id,
-                patient_code: r.patient_code,
-                patient_name: [r.title.as_deref(), Some(&r.name_en)]
-                    .into_iter()
-                    .flatten()
-                    .collect::<Vec<_>>()
-                    .join(" "),
-                visit_type: VisitType::parse(&r.visit_type).unwrap_or_default(),
-                fee: r.fee,
-                discount: r.discount,
-                total,
-                paid: r.paid,
-                due: round2((total - r.paid).max(0.0)),
-                method: PaymentMethod::parse(&r.method).unwrap_or_default(),
-            }
-        })
-        .collect())
+    Ok(rows.into_iter().map(Into::into).collect())
+}
+
+/// A patient's bills, newest first (profile Billing tab, §5.4).
+pub async fn for_patient(
+    pool: &MySqlPool,
+    clinic_id: u64,
+    patient_id: u64,
+) -> DbResult<Vec<CollectionRow>> {
+    let rows: Vec<CollectionDbRow> = sqlx::query_as(
+        "SELECT b.id AS bill_id, v.id AS visit_id, v.visit_date, b.receipt_no,
+                p.id AS patient_id, p.patient_code, p.title, p.name_en, v.visit_type,
+                CAST(b.fee AS DOUBLE) AS fee, CAST(b.discount AS DOUBLE) AS discount,
+                CAST(b.paid AS DOUBLE) AS paid, b.method
+         FROM bills b
+         JOIN visits v ON v.id = b.visit_id AND v.deleted_at IS NULL
+         JOIN patients p ON p.id = v.patient_id
+         WHERE b.clinic_id = ? AND v.patient_id = ?
+         ORDER BY v.visit_date DESC, b.id DESC",
+    )
+    .bind(clinic_id)
+    .bind(patient_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows.into_iter().map(Into::into).collect())
 }

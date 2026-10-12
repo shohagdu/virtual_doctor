@@ -10,6 +10,9 @@ import { VitalsTab } from '../vitals/VitalsTab'
 import { useAiAvailable } from '../ai/api'
 import { AiSummary } from '../ai/AiSummary'
 import { ReportsTab } from '../reports/ReportsTab'
+import { BillingTab } from './BillingTab'
+import { MergeDialog } from './MergeDialog'
+import { PrescriptionsTab } from './PrescriptionsTab'
 import { usePatientAppointments } from '../appointments/api'
 import { fmtDate } from '../../utils/date'
 import { useMedicalProfile, usePatient, useStartVisit, useVisits } from './api'
@@ -17,7 +20,7 @@ import { MedicalProfilePanel } from './MedicalProfilePanel'
 import { PatientFormDialog } from './PatientFormDialog'
 import { VisitTimeline } from './VisitTimeline'
 
-type Tab = 'visits' | 'vitals' | 'reports' | 'ai'
+type Tab = 'visits' | 'prescriptions' | 'vitals' | 'reports' | 'ai' | 'billing'
 
 export function PatientProfilePage() {
   const { id = '' } = useParams()
@@ -34,7 +37,9 @@ export function PatientProfilePage() {
   const [editing, setEditing] = useState(false)
   const [tab, setTab] = useState<Tab>('visits')
   const aiAvailable = useAiAvailable()
-  const tabs: Tab[] = role === 'doctor' ? ['visits', 'vitals', 'reports', 'ai'] : ['visits', 'vitals', 'reports']
+  const tabs: Tab[] =
+    role === 'doctor' ? ['visits', 'prescriptions', 'vitals', 'reports', 'ai', 'billing'] : ['visits', 'vitals', 'reports', 'billing']
+  const [merging, setMerging] = useState(false)
 
   if (isLoading || !p) return <p className="text-slate-500">{t('common.loading')}</p>
 
@@ -61,6 +66,11 @@ export function PatientProfilePage() {
           <button onClick={() => setEditing(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
             ✏ {t('profile.edit')}
           </button>
+          {role === 'admin' && (
+            <button onClick={() => setMerging(true)} className="rounded border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700">
+              ⇄ {t('rxtools.mergeTitle')}
+            </button>
+          )}
           <button
             onClick={() => navigate(`/appointments?book=${id}`)}
             className="rounded border border-brand bg-white px-3 py-1.5 text-sm text-brand"
@@ -125,7 +135,13 @@ export function PatientProfilePage() {
                     onClick={() => setTab(k)}
                     className={`rounded px-3 py-1 text-sm ${tab === k ? 'bg-brand text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                   >
-                    {k === 'ai' ? `🤖 ${t('ai.summaryTitle')}` : t(`${k}.title`)}
+                    {k === 'ai'
+                      ? `🤖 ${t('ai.summaryTitle')}`
+                      : k === 'prescriptions'
+                        ? t('rxtools.prescriptions')
+                        : k === 'billing'
+                          ? t('rxtools.billingTab')
+                          : t(`${k}.title`)}
                   </button>
                 ))}
               </span>
@@ -135,6 +151,10 @@ export function PatientProfilePage() {
               <VitalsTab patientId={id} />
             ) : tab === 'reports' ? (
               <ReportsTab patientId={id} clinical={role === 'doctor'} />
+            ) : tab === 'prescriptions' ? (
+              <PrescriptionsTab visits={visits.data ?? []} />
+            ) : tab === 'billing' ? (
+              <BillingTab patientId={id} />
             ) : tab === 'ai' ? (
               <AiSummary patientId={id} available={aiAvailable} />
             ) : visits.data ? (
@@ -149,10 +169,17 @@ export function PatientProfilePage() {
           </Card>
         </div>
       ) : (
-        <p className="text-sm text-slate-500">{t('profile.noClinicalAccess')}</p>
+        <>
+          <p className="text-sm text-slate-500">{t('profile.noClinicalAccess')}</p>
+          {/* Admins collect fees too (§4), so they see the patient's bills. */}
+          <Card title={t('rxtools.billingTab')}>
+            <BillingTab patientId={id} />
+          </Card>
+        </>
       )}
 
       {editing && <PatientFormDialog patient={p} onClose={() => setEditing(false)} />}
+      {merging && <MergeDialog patient={p} onClose={() => setMerging(false)} />}
     </div>
   )
 }

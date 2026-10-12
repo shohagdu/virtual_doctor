@@ -17,11 +17,16 @@ export function MedicineEditor({
   onChange,
   flagged,
   readOnly,
+  onFavorite,
+  isFavorite,
 }: {
   lines: MedicineLine[]
   onChange: (lines: MedicineLine[]) => void
   flagged: Set<string>
   readOnly: boolean
+  /** Saves the line (brand, strength and dose) as a favourite (roadmap 2.3). */
+  onFavorite?: (line: MedicineLine) => void
+  isFavorite?: (line: MedicineLine) => boolean
 }) {
   const { t } = useTranslation()
   const set = (i: number, patch: Partial<MedicineLine>) =>
@@ -73,14 +78,49 @@ export function MedicineEditor({
             className={cell}
           />
           {!readOnly && (
-            <button
-              type="button"
-              onClick={() => onChange(lines.filter((_, j) => j !== i))}
-              className="px-2 text-red-600"
-              aria-label={t('rx.removeMedicine')}
-            >
-              ✕
-            </button>
+            <div className="flex items-start">
+              {onFavorite && line.brand.trim() && (
+                <button
+                  type="button"
+                  onClick={() => onFavorite(line)}
+                  className={`px-1.5 ${isFavorite?.(line) ? 'text-amber-500' : 'text-slate-400 hover:text-amber-500'}`}
+                  aria-label={t('rxtools.saveFavorite')}
+                  title={t('rxtools.saveFavorite')}
+                >
+                  {isFavorite?.(line) ? '★' : '☆'}
+                </button>
+              )}
+              {line.notes === null && line.brand.trim() && (
+                <button
+                  type="button"
+                  onClick={() => set(i, { notes: '' })}
+                  className="px-1.5 text-slate-400 hover:text-brand"
+                  aria-label={t('rxtools.addNote')}
+                  title={t('rxtools.addNote')}
+                >
+                  ✎
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onChange(lines.filter((_, j) => j !== i))}
+                className="px-2 text-red-600"
+                aria-label={t('rx.removeMedicine')}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          {line.notes !== null && (
+            <input
+              value={line.notes}
+              onChange={(e) => set(i, { notes: e.target.value })}
+              onBlur={(e) => !e.target.value.trim() && set(i, { notes: null })}
+              placeholder={t('rxtools.notePlaceholder')}
+              readOnly={readOnly}
+              aria-label={t('rxtools.addNote')}
+              className={`${cell} sm:col-span-6`}
+            />
           )}
         </div>
       ))}

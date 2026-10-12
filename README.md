@@ -35,6 +35,12 @@ Specs live in [`Docs/`](Docs/README.md). Done so far (`Patient_Management_Spec.m
   reason), lab trends, Reports and AI Summary tabs, AI patient summary, AI smart search,
   AI SMS wording, AI usage report, AI settings. Every call is logged with model, prompt
   version and tokens; prompts are versioned in `prompt_versions`.
+- **Remaining spec / roadmap items** — merge duplicate patients (Admin, with preview; history
+  moves, visits renumbered, profiles combined, logged), profile Prescriptions tab (compare
+  any two) and Billing tab, prescription templates, favourite medicines with dose, clinic
+  medicine catalogue CSV import, weight-based dose calculator, medical / fitness certificate
+  and referral letter (printed on the pad), per-medicine notes, and unsaved-draft recovery in
+  the browser.
 
 ## Layout
 
@@ -123,6 +129,12 @@ Checks: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo
 | GET | `/api/v1/patients/smart-search?q=` | Doctor; returns the filters understood + patients |
 | POST | `/api/v1/followups/{id}/sms/ai-draft` | Reworded reminder (name filled in locally) |
 | GET | `/api/v1/ai/status`, `/api/v1/admin/ai-usage?from=&to=` | AI availability · usage (Doctor, Admin) |
+| GET / POST · DELETE | `/api/v1/rx-templates` · `/rx-templates/{id}` | Doctor; same name replaces |
+| GET / POST · DELETE | `/api/v1/medicine-favorites` · `/medicine-favorites/{id}` | Doctor's own |
+| GET · POST | `/api/v1/medicines/catalogue` · `/medicines/import` (CSV body) | Doctor, Admin |
+| GET / POST | `/api/v1/visits/{id}/documents` | Doctor; `{kind: sick_leave\|fitness\|referral, body}` |
+| GET | `/api/v1/patients/{id}/bills` | Billing tab |
+| GET · POST | `/api/v1/admin/patients/merge-preview?keep=&merge=` · `/admin/patients/merge` | Admin |
 | GET | `/api/v1/medicines/search?q=` | Catalogue + medicines this clinic prescribed before |
 | GET / PATCH | `/api/v1/me`, PATCH `/api/v1/clinic` | Doctor/clinic details for the print header |
 
@@ -156,3 +168,13 @@ and the built-in safety rules still run. AI can also be switched off per clinic 
   only). Review them before clinical use; clinic-specific rows go in `reference_ranges`.
 - Prompts are drafts to be validated against real de-identified reports (AI spec §17) before
   doctors rely on them. HEIC photos are not converted yet (the upload asks for JPEG).
+
+## Not built yet
+
+- Roadmap phases 4–6: online serial and live queue number, patient portal, QR on the
+  prescription, prescription link by SMS / WhatsApp, specialty modules (ANC, growth charts),
+  multi-chamber, telemedicine, AI scribe, lab / pharmacy integration.
+- ICD-10 codes (needs a licensed code list), a full offline mode (only unsaved ℞ drafts are
+  kept in the browser), HEIC photo conversion, patient-ID format and required-field settings.
+- A bundled Bangladeshi brand database: none is shipped; clinics import their own list.
+
