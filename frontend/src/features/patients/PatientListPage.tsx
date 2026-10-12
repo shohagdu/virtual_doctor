@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { Card } from '../../components/Card'
 import { ageText } from '../../utils/age'
 import { usePatients } from './api'
-import { NewPatientDialog } from './NewPatientDialog'
+import { PatientFormDialog } from './PatientFormDialog'
 
 export function PatientListPage() {
   const { t } = useTranslation()
@@ -102,7 +102,7 @@ export function PatientListPage() {
           </button>
         </div>
       </Card>
-      {showNew && <NewPatientDialog onClose={() => setShowNew(false)} />}
+      {showNew && <PatientFormDialog onClose={() => setShowNew(false)} />}
     </>
   )
 }

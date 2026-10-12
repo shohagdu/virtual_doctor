@@ -3,26 +3,54 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { differenceInYears } from 'date-fns'
 import type { Patient } from '../../api/types'
 import { ageText } from '../../utils/age'
-import { useCreatePatient } from './api'
+import { useCreatePatient, useUpdatePatient } from './api'
 import { patientSchema, type PatientForm } from './schema'
 
 const input = 'mt-1 w-full rounded border px-3 py-2'
 
-export function NewPatientDialog({ onClose }: { onClose: () => void }) {
+function toForm(p: Patient): PatientForm {
+  return {
+    title: p.title ?? '',
+    name_en: p.name_en,
+    name_bn: p.name_bn ?? '',
+    phone: p.phone,
+    // An estimated DOB is edited as an age, an exact one as a date.
+    dob: p.dob_estimated ? '' : p.dob,
+    age_years: p.dob_estimated ? differenceInYears(new Date(), new Date(p.dob)) : undefined,
+    sex: p.sex,
+    blood_group: p.blood_group ?? '',
+    address: p.address ?? '',
+    district: p.district ?? '',
+  }
+}
+
+/** Registers a new patient, or edits one when `patient` is given. */
+export function PatientFormDialog({ patient, onClose }: { patient?: Patient; onClose: () => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const create = useCreatePatient()
+  const update = useUpdatePatient(patient?.id ?? 0)
+  const mutation = patient ? update : create
   const [duplicates, setDuplicates] = useState<Patient[]>([])
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<PatientForm>({ resolver: zodResolver(patientSchema), defaultValues: { sex: 'M' } })
+  } = useForm<PatientForm>({
+    resolver: zodResolver(patientSchema),
+    defaultValues: patient ? toForm(patient) : { sex: 'M' },
+  })
 
   const save = (force: boolean) =>
     handleSubmit(async (form) => {
+      if (patient) {
+        await update.mutateAsync(form)
+        onClose()
+        return
+      }
       const res = await create.mutateAsync({ form, force })
       if (res.patient) {
         onClose()
@@ -38,7 +66,7 @@ export function NewPatientDialog({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-10 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
       <form onSubmit={save(false)} className="w-full max-w-2xl space-y-4 rounded-lg bg-white p-6 shadow-lg">
-        <h2 className="text-lg font-semibold">{t('patients.new')}</h2>
+        <h2 className="text-lg font-semibold">{patient ? t('patients.edit') : t('patients.new')}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm">
             Title
@@ -66,7 +94,7 @@ export function NewPatientDialog({ onClose }: { onClose: () => void }) {
           <label className="text-sm">
             Age (years)
             <input
-              {...register('age_years', { setValueAs: (v) => (v === '' ? undefined : Number(v)) })}
+              {...register('age_years', { setValueAs: (v) => (v === '' || v === undefined ? undefined : Number(v)) })}
               type="number"
               className={input}
             />
@@ -125,7 +153,7 @@ export function NewPatientDialog({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {create.isError && <p className="text-sm text-red-600">{create.error.message}</p>}
+        {mutation.isError && <p className="text-sm text-red-600">{mutation.error.message}</p>}
 
         <div className="flex flex-wrap justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded border px-4 py-2">
@@ -136,7 +164,7 @@ export function NewPatientDialog({ onClose }: { onClose: () => void }) {
               {t('patients.createAnyway')}
             </button>
           ) : (
-            <button disabled={create.isPending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60">
+            <button disabled={mutation.isPending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60">
               {t('patients.save')}
             </button>
           )}

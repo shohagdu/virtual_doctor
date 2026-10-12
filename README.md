@@ -2,9 +2,15 @@
 
 React 19.2 • Rust 1.99 (Axum) • MySQL 9.7 LTS • Claude API
 
-Specs live in [`Docs/`](Docs/README.md). This repo is at **Phase 0** (project setup) of
-`Patient_Management_Spec.md` §14, plus a first slice of Phase 1: login, patient registration
-(with duplicate check), patient search/list and a basic profile page.
+Specs live in [`Docs/`](Docs/README.md). Done so far (`Patient_Management_Spec.md` §14):
+
+- **Phase 0** — project setup, full schema, Docker, CI.
+- **Phase 1** — login with roles, patient registration (duplicate check) / edit / search,
+  patient profile with medical profile (allergies, chronic conditions, histories) and visit
+  timeline, visits linked to the prescription screen, versioned prescriptions (locked on
+  print; edits create a new version; concurrent-edit protection), print / PDF pad with doctor
+  and clinic header, follow-up record from Next Visit, basic allergy warning, Settings for
+  doctor and clinic details.
 
 ## Layout
 
@@ -54,7 +60,14 @@ Checks: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo
 | POST | `/api/v1/auth/login` | `{email, password}` → JWT |
 | GET | `/api/v1/patients?q=&page=&per_page=` | Search by name (en/bn), phone prefix, patient code |
 | POST | `/api/v1/patients[?force=true]` | Returns `duplicates` instead of saving unless `force` |
-| GET | `/api/v1/patients/{id}` | Profile |
+| GET / PATCH | `/api/v1/patients/{id}` | Profile / edit demographics |
+| GET / PUT | `/api/v1/patients/{id}/medical-profile` | Doctor, Assistant |
+| GET / POST | `/api/v1/patients/{id}/visits` | Timeline (clinical details for Doctor only) / start visit |
+| GET | `/api/v1/visits/{id}` | Visit + patient + medical profile for the ℞ screen |
+| GET / PUT | `/api/v1/visits/{id}/prescription` | Doctor; PUT sends `base: {id, revision}` from the last load, 409 if stale |
+| POST | `/api/v1/visits/{id}/prescription/lock` | Doctor; finalise on print, marks visit seen |
+| GET | `/api/v1/medicines/search?q=` | Catalogue + medicines this clinic prescribed before |
+| GET / PATCH | `/api/v1/me`, PATCH `/api/v1/clinic` | Doctor/clinic details for the print header |
 
 ## Production
 
@@ -67,7 +80,8 @@ docker compose exec backend vd-api create-user admin@clinic.bd "Admin" admin <pa
 Put TLS (e.g. Let's Encrypt) in front of the `nginx` service. MySQL is not published to the host.
 Backups are written daily to `./backups`; copy them off-server, encrypted.
 
-## Next (Phase 1 → 2)
+## Next (Phase 2)
 
-Medical profile (allergies, chronic conditions), visits + prescription screen, queue dashboard,
-vitals, history drawer, repeat ℞, allergy warnings, role checks per route.
+Today's queue dashboard (status, serials, Save & Next Patient), vitals and trend charts,
+history drawer inside the ℞ screen, repeat prescription, medicine brand database,
+prescription templates.

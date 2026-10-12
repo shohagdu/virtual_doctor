@@ -2901,6 +2901,7 @@ name = "vd-db"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "serde",
  "sqlx",
  "tracing",
  "vd-common",

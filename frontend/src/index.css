@@ -9,6 +9,30 @@
   --color-brand: #1d6fb8;
 }
 
+@layer base {
+  /* Tailwind v4 defaults borders to currentColor; use the soft grey of the existing screens. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-slate-300);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-slate-400);
+  }
+}
+
 body {
   @apply bg-slate-100 text-slate-800;
+}
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  body {
+    background: white;
+  }
 }

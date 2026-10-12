@@ -1,5 +1,7 @@
 {
-  "app": { "name": "Virtual Doctor" },
+  "app": {
+    "name": "Virtual Doctor"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "patients": "Patients",
@@ -35,7 +37,87 @@
     "duplicates": "Possible existing patient",
     "createAnyway": "Create new anyway",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "edit": "Edit Patient"
   },
-  "common": { "comingSoon": "Coming soon", "loading": "Loading…", "prev": "Previous", "next": "Next" }
+  "common": {
+    "comingSoon": "Coming soon",
+    "loading": "Loading…",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "profile": {
+    "title": "Patient Profile",
+    "edit": "Edit",
+    "newRx": "New ℞",
+    "addToQueue": "Add to Queue",
+    "addedToQueue": "Added to queue",
+    "allergies": "Allergies",
+    "chronic": "Chronic Conditions",
+    "medicines": "Current Medicines",
+    "pastHistory": "Past History",
+    "familyHistory": "Family History",
+    "socialHistory": "Social History",
+    "gynaeObs": "Gynae/Obs History",
+    "vaccination": "Vaccination",
+    "noClinicalAccess": "Medical history is not available for your role.",
+    "openTodayRx": "Today's ℞"
+  },
+  "visits": {
+    "title": "Visits",
+    "none": "No visits yet",
+    "visitNo": "Visit {{n}}",
+    "viewRx": "View ℞",
+    "startRx": "Start ℞",
+    "type": {
+      "new": "New",
+      "followup": "Follow-up",
+      "report": "Report showing"
+    },
+    "status": {
+      "waiting": "Waiting",
+      "in_consultation": "In consultation",
+      "seen": "Seen",
+      "cancelled": "Cancelled"
+    }
+  },
+  "rx": {
+    "title": "Prescription",
+    "new": "New prescription",
+    "draft": "Draft",
+    "unsaved": "unsaved changes",
+    "lockedNote": "v{{v}} is printed and locked — saving creates a new version",
+    "history": "History",
+    "save": "Save",
+    "printPdf": "Print / PDF",
+    "lastVisit": "Last visit",
+    "reload": "Reload",
+    "allergyWarning": "Allergy warning",
+    "allergyConfirm": "I have reviewed this warning and want to continue",
+    "complaints": "Chief Complaints",
+    "examination": "On Examination",
+    "investigations": "Investigations",
+    "diagnosis": "Diagnosis",
+    "drugHistory": "Drug History",
+    "advice": "Advice",
+    "nextVisit": "Next Visit",
+    "signature": "Signature",
+    "brand": "Medicine",
+    "strength": "Strength",
+    "timing": "When",
+    "duration": "Duration",
+    "addMedicine": "Add medicine",
+    "removeMedicine": "Remove medicine"
+  },
+  "settings": {
+    "profile": "My Profile",
+    "clinic": "Clinic / Chamber",
+    "name": "Name",
+    "phone": "Phone",
+    "degrees": "Degrees",
+    "bmdc": "BMDC Reg. No.",
+    "clinicName": "Clinic name",
+    "address": "Address",
+    "saved": "Saved"
+  }
 }

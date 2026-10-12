@@ -1,8 +1,13 @@
 //! MySQL access (sqlx). Queries are runtime-checked so the crate builds without a live database.
 
 pub mod audit;
+pub mod clinics;
+pub mod medical_profile;
+pub mod medicines;
 pub mod patients;
+pub mod prescriptions;
 pub mod users;
+pub mod visits;
 
 pub use sqlx::MySqlPool;
 use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};

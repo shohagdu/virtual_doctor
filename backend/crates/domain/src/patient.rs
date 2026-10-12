@@ -79,6 +79,10 @@ fn clean(v: Option<String>) -> Option<String> {
     v.map(|s| s.trim().to_string()).filter(|s| !s.is_empty())
 }
 
+fn bounded(v: Option<String>, field: &str, max: usize) -> Result<Option<String>, AppError> {
+    crate::text::opt(clean(v), field, max)
+}
+
 /// Bangladesh mobile format: 01[3-9]XXXXXXXX. Accepts +880 / 880 prefixes.
 pub fn normalize_phone(raw: &str) -> Option<String> {
     let digits: String = raw.chars().filter(|c| c.is_ascii_digit()).collect();
@@ -94,6 +98,7 @@ impl NewPatientInput {
         if name_en.chars().count() < 2 {
             return Err(AppError::Validation("name is required".into()));
         }
+        crate::text::check_len(&name_en, "name", 150)?;
         let phone = normalize_phone(&self.phone)
             .ok_or_else(|| AppError::Validation("phone must be in 01XXXXXXXXX format".into()))?;
 
@@ -117,16 +122,16 @@ impl NewPatientInput {
         };
 
         Ok(NewPatient {
-            title: clean(self.title),
+            title: bounded(self.title, "title", 10)?,
             name_en,
-            name_bn: clean(self.name_bn),
+            name_bn: bounded(self.name_bn, "name_bn", 150)?,
             phone,
             dob,
             dob_estimated,
             sex: self.sex,
-            blood_group: clean(self.blood_group),
-            address: clean(self.address),
-            district: clean(self.district),
+            blood_group: bounded(self.blood_group, "blood_group", 5)?,
+            address: bounded(self.address, "address", 255)?,
+            district: bounded(self.district, "district", 100)?,
         })
     }
 }

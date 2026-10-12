@@ -55,3 +55,43 @@ pub async fn create(
     .await?;
     Ok(res.last_insert_id())
 }
+
+/// The signed-in user's own profile; doctor fields are printed on prescriptions.
+#[derive(Debug, serde::Serialize, sqlx::FromRow)]
+pub struct Profile {
+    pub id: u64,
+    pub name: String,
+    pub email: String,
+    pub phone: Option<String>,
+    pub role: String,
+    pub degrees: Option<String>,
+    pub bmdc_reg_no: Option<String>,
+}
+
+pub async fn profile(pool: &MySqlPool, id: u64) -> DbResult<Profile> {
+    sqlx::query_as(
+        "SELECT id, name, email, phone, role, degrees, bmdc_reg_no FROM users WHERE id = ?",
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await
+}
+
+pub async fn update_profile(
+    pool: &MySqlPool,
+    id: u64,
+    name: &str,
+    phone: Option<&str>,
+    degrees: Option<&str>,
+    bmdc_reg_no: Option<&str>,
+) -> DbResult<()> {
+    sqlx::query("UPDATE users SET name = ?, phone = ?, degrees = ?, bmdc_reg_no = ? WHERE id = ?")
+        .bind(name)
+        .bind(phone)
+        .bind(degrees)
+        .bind(bmdc_reg_no)
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}

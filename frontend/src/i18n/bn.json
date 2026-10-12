@@ -1,5 +1,7 @@
 {
-  "app": { "name": "ভার্চুয়াল ডক্টর" },
+  "app": {
+    "name": "ভার্চুয়াল ডক্টর"
+  },
   "nav": {
     "dashboard": "ড্যাশবোর্ড",
     "patients": "রোগী",
@@ -35,7 +37,87 @@
     "duplicates": "সম্ভাব্য পুরনো রোগী",
     "createAnyway": "তবুও নতুন তৈরি করুন",
     "save": "সংরক্ষণ",
-    "cancel": "বাতিল"
+    "cancel": "বাতিল",
+    "edit": "রোগীর তথ্য সম্পাদনা"
   },
-  "common": { "comingSoon": "শীঘ্রই আসছে", "loading": "লোড হচ্ছে…", "prev": "আগের", "next": "পরের" }
+  "common": {
+    "comingSoon": "শীঘ্রই আসছে",
+    "loading": "লোড হচ্ছে…",
+    "prev": "আগের",
+    "next": "পরের"
+  },
+  "profile": {
+    "title": "রোগীর প্রোফাইল",
+    "edit": "সম্পাদনা",
+    "newRx": "নতুন ℞",
+    "addToQueue": "সিরিয়ালে যোগ করুন",
+    "addedToQueue": "সিরিয়ালে যোগ হয়েছে",
+    "allergies": "এলার্জি",
+    "chronic": "দীর্ঘমেয়াদি রোগ",
+    "medicines": "চলমান ওষুধ",
+    "pastHistory": "পূর্বের ইতিহাস",
+    "familyHistory": "পারিবারিক ইতিহাস",
+    "socialHistory": "সামাজিক ইতিহাস",
+    "gynaeObs": "গাইনি/প্রসূতি ইতিহাস",
+    "vaccination": "টিকা",
+    "noClinicalAccess": "আপনার রোলের জন্য চিকিৎসা ইতিহাস দেখা যাবে না।",
+    "openTodayRx": "আজকের ℞"
+  },
+  "visits": {
+    "title": "ভিজিট",
+    "none": "এখনো কোনো ভিজিট নেই",
+    "visitNo": "ভিজিট {{n}}",
+    "viewRx": "℞ দেখুন",
+    "startRx": "℞ শুরু করুন",
+    "type": {
+      "new": "নতুন",
+      "followup": "ফলো-আপ",
+      "report": "রিপোর্ট দেখানো"
+    },
+    "status": {
+      "waiting": "অপেক্ষমাণ",
+      "in_consultation": "পরামর্শ চলছে",
+      "seen": "দেখা হয়েছে",
+      "cancelled": "বাতিল"
+    }
+  },
+  "rx": {
+    "title": "প্রেসক্রিপশন",
+    "new": "নতুন প্রেসক্রিপশন",
+    "draft": "খসড়া",
+    "unsaved": "সংরক্ষণ করা হয়নি",
+    "lockedNote": "v{{v}} প্রিন্ট ও লক করা — সংরক্ষণ করলে নতুন ভার্সন তৈরি হবে",
+    "history": "ইতিহাস",
+    "save": "সংরক্ষণ",
+    "printPdf": "প্রিন্ট / PDF",
+    "lastVisit": "শেষ ভিজিট",
+    "reload": "রিলোড",
+    "allergyWarning": "এলার্জি সতর্কতা",
+    "allergyConfirm": "আমি সতর্কতাটি দেখেছি এবং চালিয়ে যেতে চাই",
+    "complaints": "প্রধান অভিযোগ",
+    "examination": "পরীক্ষা",
+    "investigations": "পরীক্ষা-নিরীক্ষা",
+    "diagnosis": "রোগ নির্ণয়",
+    "drugHistory": "ওষুধের ইতিহাস",
+    "advice": "পরামর্শ",
+    "nextVisit": "পরবর্তী ভিজিট",
+    "signature": "স্বাক্ষর",
+    "brand": "ওষুধ",
+    "strength": "মাত্রা",
+    "timing": "কখন",
+    "duration": "কতদিন",
+    "addMedicine": "ওষুধ যোগ করুন",
+    "removeMedicine": "ওষুধ বাদ দিন"
+  },
+  "settings": {
+    "profile": "আমার প্রোফাইল",
+    "clinic": "ক্লিনিক / চেম্বার",
+    "name": "নাম",
+    "phone": "ফোন",
+    "degrees": "ডিগ্রি",
+    "bmdc": "BMDC রেজি. নং",
+    "clinicName": "ক্লিনিকের নাম",
+    "address": "ঠিকানা",
+    "saved": "সংরক্ষিত হয়েছে"
+  }
 }

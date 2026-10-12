@@ -1,9 +1,11 @@
 use axum::Json;
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use vd_common::auth::Role;
 use vd_common::{AppError, AppResult};
+use vd_domain::clinic_today;
+use vd_domain::medical_profile::MedicalProfile;
 use vd_domain::patient::{NewPatientInput, Patient};
 
 use crate::auth::AuthUser;
@@ -85,7 +87,7 @@ pub async fn create(
     Query(cq): Query<CreateQuery>,
     Json(input): Json<NewPatientInput>,
 ) -> AppResult<(StatusCode, Json<CreateResponse>)> {
-    let new = input.validate(Utc::now().date_naive())?;
+    let new = input.validate(clinic_today())?;
 
     if !cq.force {
         let duplicates =
@@ -123,4 +125,54 @@ pub async fn create(
             duplicates: vec![],
         }),
     ))
+}
+
+/// Edits demographics (any role, §4).
+pub async fn update(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<u64>,
+    Json(input): Json<NewPatientInput>,
+) -> AppResult<Json<Patient>> {
+    let new = input.validate(clinic_today())?;
+    let patient = vd_db::patients::update(&state.pool, user.clinic_id, id, &new)
+        .await
+        .map_err(AppError::internal)?
+        .ok_or(AppError::NotFound)?;
+    user.audit(&state, "patient", id, "update").await?;
+    Ok(Json(patient))
+}
+
+/// Allergies, chronic conditions and histories. Clinical data, so not for Admin (§4).
+pub async fn medical_profile(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<u64>,
+) -> AppResult<Json<MedicalProfile>> {
+    user.require(&[Role::Doctor, Role::Assistant])?;
+    let profile = vd_db::medical_profile::get(&state.pool, user.clinic_id, id)
+        .await
+        .map_err(AppError::internal)?
+        .ok_or(AppError::NotFound)?;
+    user.audit(&state, "medical_profile", id, "view").await?;
+    Ok(Json(profile))
+}
+
+pub async fn put_medical_profile(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<u64>,
+    Json(input): Json<MedicalProfile>,
+) -> AppResult<Json<MedicalProfile>> {
+    user.require(&[Role::Doctor, Role::Assistant])?;
+    let profile = input.validate()?;
+    vd_db::patients::get(&state.pool, user.clinic_id, id)
+        .await
+        .map_err(AppError::internal)?
+        .ok_or(AppError::NotFound)?;
+    vd_db::medical_profile::put(&state.pool, id, &profile)
+        .await
+        .map_err(AppError::internal)?;
+    user.audit(&state, "medical_profile", id, "update").await?;
+    Ok(Json(profile))
 }

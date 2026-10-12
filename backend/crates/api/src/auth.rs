@@ -11,8 +11,38 @@ use crate::state::AppState;
 pub struct AuthUser {
     pub id: u64,
     pub clinic_id: u64,
-    #[allow(dead_code)] // per-route role checks arrive with the clinical endpoints
     pub role: Role,
+}
+
+impl AuthUser {
+    /// Role check per route (Patient_Management_Spec §4).
+    pub fn require(&self, allowed: &[Role]) -> Result<(), AppError> {
+        if allowed.contains(&self.role) {
+            Ok(())
+        } else {
+            Err(AppError::Forbidden)
+        }
+    }
+
+    /// Writes an audit trail entry (PM-21, §11).
+    pub async fn audit(
+        &self,
+        state: &AppState,
+        entity: &str,
+        id: u64,
+        action: &str,
+    ) -> Result<(), AppError> {
+        vd_db::audit::log(
+            &state.pool,
+            self.clinic_id,
+            Some(self.id),
+            entity,
+            Some(id),
+            action,
+        )
+        .await
+        .map_err(AppError::internal)
+    }
 }
 
 impl FromRequestParts<AppState> for AuthUser {

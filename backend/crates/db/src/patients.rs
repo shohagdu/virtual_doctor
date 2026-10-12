@@ -141,6 +141,38 @@ pub async fn create(
         .expect("patient just inserted"))
 }
 
+/// Replaces the demographic fields (PATCH /patients/{id}). Returns `None` if not found.
+pub async fn update(
+    pool: &MySqlPool,
+    clinic_id: u64,
+    id: u64,
+    p: &NewPatient,
+) -> DbResult<Option<Patient>> {
+    let res = sqlx::query(
+        "UPDATE patients SET title = ?, name_en = ?, name_bn = ?, phone = ?, dob = ?,
+            dob_estimated = ?, sex = ?, blood_group = ?, address = ?, district = ?
+         WHERE clinic_id = ? AND id = ? AND deleted_at IS NULL",
+    )
+    .bind(&p.title)
+    .bind(&p.name_en)
+    .bind(&p.name_bn)
+    .bind(&p.phone)
+    .bind(p.dob)
+    .bind(p.dob_estimated)
+    .bind(p.sex.as_str())
+    .bind(&p.blood_group)
+    .bind(&p.address)
+    .bind(&p.district)
+    .bind(clinic_id)
+    .bind(id)
+    .execute(pool)
+    .await?;
+    if res.rows_affected() == 0 && get(pool, clinic_id, id).await?.is_none() {
+        return Ok(None);
+    }
+    get(pool, clinic_id, id).await
+}
+
 /// Search by name (English/Bangla), phone prefix, or patient code. Newest first.
 pub async fn search(
     pool: &MySqlPool,

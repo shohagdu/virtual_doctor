@@ -18,7 +18,7 @@ export function Layout() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3">
           <span className="text-lg font-semibold text-brand">{t('app.name')}</span>
           <nav className="flex flex-wrap gap-1">
@@ -45,7 +45,7 @@ export function Layout() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl p-4">
+      <main className="mx-auto max-w-7xl p-4 print:max-w-none print:p-0">
         <Outlet />
       </main>
     </div>
