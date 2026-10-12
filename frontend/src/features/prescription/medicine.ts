@@ -1,24 +1,5 @@
 import type { MedicineLine } from '../../api/types'
 
-/**
- * Medicines whose brand or generic name matches a recorded allergy (PM-09).
- * A plain text match: it catches "Penicillin" in "Phenoxymethylpenicillin" but not
- * drug-class relations, which need the medicine database (Phase 2).
- */
-export function allergyMatches(medicines: MedicineLine[], allergies: string[]): { brand: string; allergy: string }[] {
-  const out: { brand: string; allergy: string }[] = []
-  for (const m of medicines) {
-    const names = [m.brand, m.generic ?? ''].map((s) => s.toLowerCase()).filter((s) => s.length >= 3)
-    for (const a of allergies) {
-      const al = a.toLowerCase().trim()
-      if (al.length >= 3 && names.some((n) => n.includes(al) || al.includes(n))) {
-        out.push({ brand: m.brand, allergy: a })
-      }
-    }
-  }
-  return out
-}
-
 export const emptyLine: MedicineLine = {
   medicine_id: null,
   brand: '',
@@ -29,4 +10,28 @@ export const emptyLine: MedicineLine = {
   timing: null,
   duration: null,
   notes: null,
+}
+
+/** "Tab Napa 500 mg" */
+export function medicineName(m: MedicineLine) {
+  return [m.form, m.brand, m.strength].filter(Boolean).join(' ')
+}
+
+/** "1+1+1 — খাবারের পরে — ৫ দিন" */
+export function medicineDirections(m: MedicineLine) {
+  return [m.dose_pattern, m.timing, m.duration].filter(Boolean).join(' — ')
+}
+
+const sameMedicine = (a: MedicineLine, b: MedicineLine) =>
+  a.brand.trim().toLowerCase() === b.brand.trim().toLowerCase() &&
+  (a.strength ?? '').trim().toLowerCase() === (b.strength ?? '').trim().toLowerCase()
+
+/**
+ * Adds copied medicines (Repeat ℞ / Copy from history, PM-10) after the current ones,
+ * dropping blank rows and medicines that are already on the prescription.
+ */
+export function addMedicines(current: MedicineLine[], copied: MedicineLine[]): MedicineLine[] {
+  const kept = current.filter((m) => m.brand.trim())
+  const fresh = copied.filter((m) => m.brand.trim() && !kept.some((k) => sameMedicine(k, m)))
+  return [...kept, ...fresh]
 }

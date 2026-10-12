@@ -1,30 +1,55 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
 import { useMe } from '../../api/me'
-import type { Prescription, PrescriptionBody, VisitContext } from '../../api/types'
+import type { MedicineLine, Prescription, PrescriptionBody, VisitContext } from '../../api/types'
 import { ListSection } from '../../components/ListSection'
 import { PatientInfoBar } from '../../components/PatientInfoBar'
 import { fmtDate, todayIso } from '../../utils/date'
-import { allergyMatches, emptyLine } from './medicine'
+import { useVisits } from '../patients/api'
+import { useCallNext } from '../queue/api'
+import { vitalsParts } from '../vitals/format'
+import { VitalsDialog } from '../vitals/VitalsDialog'
+import { addMedicines, emptyLine } from './medicine'
+import { HistoryDrawer } from './HistoryDrawer'
 import { MedicineEditor } from './MedicineEditor'
 import { PrintView } from './PrintView'
-import { useLockPrescription, usePrescription, useSavePrescription, useVisitContext } from './api'
+import {
+  useAllergyCheck,
+  useLockPrescription,
+  usePrescription,
+  useSavePrescription,
+  useVisitContext,
+} from './api'
 
 export function PrescriptionPage() {
   const { id = '' } = useParams()
   const { t } = useTranslation()
+  const [params] = useSearchParams()
   const ctx = useVisitContext(id)
   const rx = usePrescription(id)
+  const history = useVisits(ctx.data ? String(ctx.data.patient.id) : '', !!ctx.data)
 
   if (ctx.isError || rx.isError) {
     return <p className="text-red-600">{(ctx.error ?? rx.error)?.message}</p>
   }
-  if (!ctx.data || !rx.data) return <p className="text-slate-500">{t('common.loading')}</p>
+  // Repeat ℞ from the profile timeline arrives as ?repeat=<visit id> (PM-10).
+  const repeatId = Number(params.get('repeat'))
+  if (!ctx.data || !rx.data || (repeatId && !history.data)) {
+    return <p className="text-slate-500">{t('common.loading')}</p>
+  }
+  const repeatFrom = history.data?.find((v) => v.id === repeatId)?.prescription?.medicines ?? []
 
   // Remounts with fresh state whenever a new revision comes back from the server.
-  return <PrescriptionEditor key={`${rx.data.id}-${rx.data.revision}-${rx.data.locked}`} ctx={ctx.data} rx={rx.data} />
+  return (
+    <PrescriptionEditor
+      key={`${rx.data.id}-${rx.data.revision}-${rx.data.locked}`}
+      ctx={ctx.data}
+      rx={rx.data}
+      repeatFrom={repeatFrom}
+    />
+  )
 }
 
 function bodyOf(rx: Prescription): PrescriptionBody {
@@ -32,36 +57,73 @@ function bodyOf(rx: Prescription): PrescriptionBody {
   return { complaints, examination, investigations, diagnosis, treatment_plan, advice, next_plan, operation_notes, next_visit_date, medicines }
 }
 
-function PrescriptionEditor({ ctx, rx }: { ctx: VisitContext; rx: Prescription }) {
+function PrescriptionEditor({
+  ctx,
+  rx,
+  repeatFrom,
+}: {
+  ctx: VisitContext
+  rx: Prescription
+  repeatFrom: MedicineLine[]
+}) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
   const { data: me } = useMe()
   const { visit, patient, profile } = ctx
   const visitId = String(visit.id)
   const save = useSavePrescription(visitId)
   const lock = useLockPrescription(visitId)
+  const callNext = useCallNext()
+  const history = useVisits(String(patient.id))
+  const previous = (history.data ?? []).filter((v) => v.id !== visit.id && v.status !== 'cancelled')
+  const lastRx = previous.find((v) => (v.prescription?.medicines.length ?? 0) > 0)
+  const [drawer, setDrawer] = useState(false)
+  const [vitalsOpen, setVitalsOpen] = useState(false)
 
   const initial = useMemo(() => {
     const b = bodyOf(rx)
-    return b.medicines.length ? b : { ...b, medicines: [emptyLine] }
-  }, [rx])
+    const medicines = addMedicines(b.medicines, repeatFrom)
+    return { ...b, medicines: medicines.length ? medicines : [emptyLine] }
+  }, [rx, repeatFrom])
   const [body, setBody] = useState<PrescriptionBody>(initial)
-  const [dirty, setDirty] = useState(false)
+  // Copied-in medicines are unsaved changes until the doctor saves.
+  const [dirty, setDirty] = useState(() => addMedicines(rx.medicines, repeatFrom).length > rx.medicines.length)
   const [allergyAck, setAllergyAck] = useState(false)
   const set = (patch: Partial<PrescriptionBody>) => {
     setBody((b) => ({ ...b, ...patch }))
     setDirty(true)
   }
 
-  const matches = allergyMatches(body.medicines, profile.allergies)
+  const copyMedicines = (copied: MedicineLine[]) => {
+    set({ medicines: addMedicines(body.medicines, copied) })
+    setAllergyAck(false)
+  }
+
+  const allergyCheck = useAllergyCheck(visitId, body.medicines, profile.allergies.length > 0)
+  const matches = profile.allergies.length > 0 ? (allergyCheck.data ?? []) : []
   const flagged = new Set(matches.map((m) => m.brand))
   // Acknowledge before saving changes; reprinting an unchanged locked version needs no repeat.
   const blockedByAllergy = matches.length > 0 && !allergyAck && (dirty || !rx.locked)
   const base = rx.id === null ? null : { id: rx.id, revision: rx.revision }
-  const busy = save.isPending || lock.isPending
-  const error = save.error ?? lock.error
+  const busy = save.isPending || lock.isPending || callNext.isPending
+  const error = save.error ?? lock.error ?? callNext.error
   const conflict = error instanceof ApiError && error.status === 409
 
-  const doSave = () => save.mutateAsync({ base, body })
+  const doSave = async () => {
+    const saved = await save.mutateAsync({ base, body, allergy_ack: allergyAck })
+    // The repeat is done once saved; don't copy again on reload.
+    if (params.has('repeat')) setParams({}, { replace: true })
+    return saved
+  }
+
+  // Save & Next Patient (§5.5): only for today's queue.
+  const isToday = visit.visit_date === todayIso()
+  const doNext = async () => {
+    if (dirty) await doSave()
+    const { next } = await callNext.mutateAsync(visit.id)
+    navigate(next ? `/visits/${next.id}/prescription` : '/dashboard')
+  }
 
   const doPrint = async () => {
     let current = rx
@@ -91,9 +153,10 @@ function PrescriptionEditor({ ctx, rx }: { ctx: VisitContext; rx: Prescription }
             {dirty && ` · ${t('rx.unsaved')}`}
           </span>
           <div className="ml-auto flex flex-wrap gap-2">
-            <Link to={`/patients/${patient.id}`} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
+            <button onClick={() => setDrawer(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
               🕘 {t('rx.history')}
-            </Link>
+              {previous.length > 0 && ` (${previous.length})`}
+            </button>
             <button
               onClick={() => doSave()}
               disabled={busy || !dirty || blockedByAllergy}
@@ -108,6 +171,15 @@ function PrescriptionEditor({ ctx, rx }: { ctx: VisitContext; rx: Prescription }
             >
               🖨 {t('rx.printPdf')}
             </button>
+            {isToday && (
+              <button
+                onClick={doNext}
+                disabled={busy || (dirty && blockedByAllergy)}
+                className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+              >
+                {dirty ? t('rx.saveAndNext') : t('rx.nextPatient')} ⏭
+              </button>
+            )}
           </div>
         </div>
 
@@ -140,6 +212,7 @@ function PrescriptionEditor({ ctx, rx }: { ctx: VisitContext; rx: Prescription }
               {matches.map((m) => (
                 <li key={`${m.brand}-${m.allergy}`}>
                   {m.brand} — {t('profile.allergies')}: {m.allergy}
+                  {m.class && ` (${t('rx.sameClass', { cls: m.class })})`}
                 </li>
               ))}
             </ul>
@@ -152,6 +225,23 @@ function PrescriptionEditor({ ctx, rx }: { ctx: VisitContext; rx: Prescription }
 
         <div className="grid gap-4 md:grid-cols-[300px_1fr]">
           <aside className="space-y-4 rounded-lg bg-panel p-4">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-sm font-semibold">
+                <span>{t('vitals.title')}</span>
+                <button type="button" onClick={() => setVitalsOpen(true)} className="text-brand" aria-label={t('vitals.record')}>
+                  {ctx.vitals ? '✏' : '➕'}
+                </button>
+              </div>
+              {ctx.vitals ? (
+                <ul className="text-sm">
+                  {vitalsParts(ctx.vitals).map((p) => (
+                    <li key={p}>• {p}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-slate-400">—</p>
+              )}
+            </div>
             {section('complaints', t('rx.complaints'))}
             {section('examination', t('rx.examination'))}
             {section('investigations', t('rx.investigations'))}
@@ -168,7 +258,18 @@ function PrescriptionEditor({ ctx, rx }: { ctx: VisitContext; rx: Prescription }
 
           <section className="space-y-5 rounded-lg bg-white p-4 shadow-sm">
             <div>
-              <div className="mb-2 text-2xl font-bold text-brand">℞</div>
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="text-2xl font-bold text-brand">℞</span>
+                {lastRx && (
+                  <button
+                    type="button"
+                    onClick={() => copyMedicines(lastRx.prescription?.medicines ?? [])}
+                    className="ml-auto rounded border px-2 py-1 text-xs text-brand"
+                  >
+                    ↻ {t('rx.repeatLast', { date: fmtDate(lastRx.visit_date) })}
+                  </button>
+                )}
+              </div>
               <MedicineEditor
                 lines={body.medicines}
                 onChange={(medicines) => set({ medicines })}
@@ -191,7 +292,26 @@ function PrescriptionEditor({ ctx, rx }: { ctx: VisitContext; rx: Prescription }
         </div>
       </div>
 
-      <PrintView me={me} patient={patient} visit={visit} body={body} version={Math.max(rx.version, 1)} />
+      <PrintView
+        me={me}
+        patient={patient}
+        visit={visit}
+        vitals={ctx.vitals}
+        body={body}
+        version={Math.max(rx.version, 1)}
+      />
+
+      {drawer && (
+        <HistoryDrawer
+          visits={previous}
+          onCopy={(m) => {
+            copyMedicines(m)
+            setDrawer(false)
+          }}
+          onClose={() => setDrawer(false)}
+        />
+      )}
+      {vitalsOpen && <VitalsDialog visitId={visit.id} patientId={patient.id} onClose={() => setVitalsOpen(false)} />}
     </>
   )
 }

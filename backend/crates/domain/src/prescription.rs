@@ -120,6 +120,9 @@ pub struct BaseVersion {
 #[derive(Clone, Debug, Deserialize)]
 pub struct SavePrescription {
     pub base: Option<BaseVersion>,
+    /// The doctor confirmed the allergy warning shown for this prescription (§13).
+    #[serde(default)]
+    pub allergy_ack: bool,
     #[serde(flatten)]
     pub body: PrescriptionBody,
 }

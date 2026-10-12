@@ -11,6 +11,12 @@ Specs live in [`Docs/`](Docs/README.md). Done so far (`Patient_Management_Spec.m
   print; edits create a new version; concurrent-edit protection), print / PDF pad with doctor
   and clinic header, follow-up record from Next Visit, basic allergy warning, Settings for
   doctor and clinic details.
+- **Phase 2** — today's queue dashboard (counters, serials, add-to-queue search, status
+  changes, drag / ▲▼ reorder, auto-refresh), vitals per visit with BMI, trend chart and
+  table, vitals on the ℞ screen and print, 🕘 history drawer with copy (all or selected)
+  medicines, Repeat ℞ (profile timeline and "Repeat last ℞"), Save & Next Patient, and
+  allergy warnings by name **and drug class** (penicillins, cephalosporins, sulfonamides,
+  NSAIDs, macrolides, quinolones, tetracyclines, opioids), enforced on save.
 
 ## Layout
 
@@ -66,6 +72,13 @@ Checks: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo
 | GET | `/api/v1/visits/{id}` | Visit + patient + medical profile for the ℞ screen |
 | GET / PUT | `/api/v1/visits/{id}/prescription` | Doctor; PUT sends `base: {id, revision}` from the last load, 409 if stale |
 | POST | `/api/v1/visits/{id}/prescription/lock` | Doctor; finalise on print, marks visit seen |
+| GET | `/api/v1/queue/today` | Today's queue + counters (all roles) |
+| POST | `/api/v1/queue/today` | `{patient_id, visit_type}`; 409 if already queued today |
+| PATCH | `/api/v1/queue/{visit_id}` | `{status?, position?}`; In consultation / Seen are Doctor only |
+| POST | `/api/v1/queue/next` | Doctor; `{current_visit_id}` → marks it seen, calls the next waiting patient |
+| GET / PUT | `/api/v1/visits/{id}/vitals` | Doctor, Assistant; BMI calculated on the server |
+| GET | `/api/v1/patients/{id}/vitals/trend` | Doctor, Assistant |
+| POST | `/api/v1/visits/{id}/allergy-check` | Doctor; `{medicines}` → matches. ℞ PUT needs `allergy_ack: true` when any match |
 | GET | `/api/v1/medicines/search?q=` | Catalogue + medicines this clinic prescribed before |
 | GET / PATCH | `/api/v1/me`, PATCH `/api/v1/clinic` | Doctor/clinic details for the print header |
 
@@ -80,8 +93,8 @@ docker compose exec backend vd-api create-user admin@clinic.bd "Admin" admin <pa
 Put TLS (e.g. Let's Encrypt) in front of the `nginx` service. MySQL is not published to the host.
 Backups are written daily to `./backups`; copy them off-server, encrypted.
 
-## Next (Phase 2)
+## Next (Phase 3)
 
-Today's queue dashboard (status, serials, Save & Next Patient), vitals and trend charts,
-history drawer inside the ℞ screen, repeat prescription, medicine brand database,
-prescription templates.
+Appointments, follow-up list and reminders, SMS, billing (`Patient_Management_Spec.md` §14).
+Still open from the roadmap: medicine brand database (the allergy check gets generics from
+it), prescription templates.

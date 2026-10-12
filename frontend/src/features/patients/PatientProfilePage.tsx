@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import type { VisitSummary } from '../../api/types'
 import { Card } from '../../components/Card'
 import { PatientInfoBar } from '../../components/PatientInfoBar'
 import { todayIso } from '../../utils/date'
 import { useAuth } from '../auth/authStore'
+import { VitalsTab } from '../vitals/VitalsTab'
 import { useMedicalProfile, usePatient, useStartVisit, useVisits } from './api'
 import { MedicalProfilePanel } from './MedicalProfilePanel'
 import { PatientFormDialog } from './PatientFormDialog'
@@ -21,6 +23,7 @@ export function PatientProfilePage() {
   const visits = useVisits(id, clinicalAccess)
   const startVisit = useStartVisit(id)
   const [editing, setEditing] = useState(false)
+  const [tab, setTab] = useState<'visits' | 'vitals'>('visits')
 
   if (isLoading || !p) return <p className="text-slate-500">{t('common.loading')}</p>
 
@@ -28,9 +31,15 @@ export function PatientProfilePage() {
   const openToday = visits.data?.find(
     (v) => v.visit_date === todayIso() && (v.status === 'waiting' || v.status === 'in_consultation'),
   )
+  const todayVisit = async () => openToday ?? (await startVisit.mutateAsync(visits.data?.length ? 'followup' : 'new'))
   const newRx = async () => {
-    const visit = openToday ?? (await startVisit.mutateAsync(visits.data?.length ? 'followup' : 'new'))
+    const visit = await todayVisit()
     navigate(`/visits/${visit.id}/prescription`)
+  }
+  // Repeat ℞ (PM-10): today's prescription opens with that visit's medicines copied in.
+  const repeat = async (from: VisitSummary) => {
+    const visit = await todayVisit()
+    navigate(`/visits/${visit.id}/prescription${visit.id === from.id ? '' : `?repeat=${from.id}`}`)
   }
 
   return (
@@ -71,9 +80,31 @@ export function PatientProfilePage() {
           ) : (
             <aside className="rounded-lg bg-panel p-4 text-sm text-slate-500">{t('common.loading')}</aside>
           )}
-          <Card title={t('visits.title')}>
-            {visits.data ? (
-              <VisitTimeline visits={visits.data} canOpen={role === 'doctor'} />
+          <Card
+            title={
+              <span className="flex gap-1" role="tablist">
+                {(['visits', 'vitals'] as const).map((k) => (
+                  <button
+                    key={k}
+                    role="tab"
+                    aria-selected={tab === k}
+                    onClick={() => setTab(k)}
+                    className={`rounded px-3 py-1 text-sm ${tab === k ? 'bg-brand text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    {t(`${k}.title`)}
+                  </button>
+                ))}
+              </span>
+            }
+          >
+            {tab === 'vitals' ? (
+              <VitalsTab patientId={id} />
+            ) : visits.data ? (
+              <VisitTimeline
+                visits={visits.data}
+                canOpen={role === 'doctor'}
+                onRepeat={role === 'doctor' ? repeat : undefined}
+              />
             ) : (
               <p className="text-slate-500">{t('common.loading')}</p>
             )}

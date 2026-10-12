@@ -3,6 +3,7 @@ mod health;
 mod me;
 mod medicines;
 mod patients;
+mod queue;
 mod visits;
 
 use axum::Router;
@@ -28,7 +29,16 @@ pub fn router(state: AppState) -> Router {
             "/patients/{id}/visits",
             get(visits::timeline).post(visits::start),
         )
+        .route("/patients/{id}/vitals/trend", get(visits::vitals_trend))
+        .route("/queue/today", get(queue::today).post(queue::add))
+        .route("/queue/next", post(queue::next))
+        .route("/queue/{id}", patch(queue::update))
         .route("/visits/{id}", get(visits::show))
+        .route(
+            "/visits/{id}/vitals",
+            get(visits::vitals).put(visits::save_vitals),
+        )
+        .route("/visits/{id}/allergy-check", post(visits::allergy_check))
         .route(
             "/visits/{id}/prescription",
             get(visits::prescription).put(visits::save_prescription),

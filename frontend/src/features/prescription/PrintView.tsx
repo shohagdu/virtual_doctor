@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import type { Me, Patient, PrescriptionBody, Visit } from '../../api/types'
+import type { Me, Patient, PrescriptionBody, Visit, Vitals } from '../../api/types'
 import { ageText } from '../../utils/age'
 import { fmtDate } from '../../utils/date'
+import { vitalsParts } from '../vitals/format'
+import { medicineDirections, medicineName } from './medicine'
 
 const sexLabel = { M: 'Male', F: 'Female', O: 'Other' } as const
 
@@ -24,12 +26,14 @@ export function PrintView({
   me,
   patient,
   visit,
+  vitals,
   body,
   version,
 }: {
   me: Me | undefined
   patient: Patient
   visit: Visit
+  vitals: Vitals | null
   body: PrescriptionBody
   version: number
 }) {
@@ -70,7 +74,7 @@ export function PrintView({
       <div className="grid grid-cols-[35%_1fr] gap-4 pt-3">
         <div className="border-r border-black pr-3">
           <Section title={t('rx.complaints')} items={body.complaints} />
-          <Section title={t('rx.examination')} items={body.examination} />
+          <Section title={t('rx.examination')} items={[...vitalsParts(vitals), ...body.examination]} />
           <Section title={t('rx.investigations')} items={body.investigations} />
           <Section title={t('rx.diagnosis')} items={body.diagnosis} />
         </div>
@@ -79,9 +83,9 @@ export function PrintView({
           <ol className="mb-4 ml-5 list-decimal space-y-2">
             {body.medicines.filter((m) => m.brand.trim()).map((m, i) => (
               <li key={i}>
-                <b>{[m.form, m.brand, m.strength].filter(Boolean).join(' ')}</b>
+                <b>{medicineName(m)}</b>
                 {m.generic && <span className="text-[11px]"> ({m.generic})</span>}
-                <div>{[m.dose_pattern, m.timing, m.duration].filter(Boolean).join(' — ')}</div>
+                <div>{medicineDirections(m)}</div>
                 {m.notes && <div className="text-[12px]">{m.notes}</div>}
               </li>
             ))}

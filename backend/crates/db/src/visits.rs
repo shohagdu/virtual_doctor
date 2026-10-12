@@ -2,8 +2,10 @@ use std::collections::HashMap;
 
 use chrono::{NaiveDate, NaiveDateTime};
 use sqlx::types::Json;
+use vd_domain::prescription::MedicineLine;
 use vd_domain::visit::{PrescriptionSummary, Visit, VisitStatus, VisitSummary, VisitType};
 
+use crate::prescriptions::{MED_COLUMNS, MedRow};
 use crate::{DbResult, MySqlPool};
 
 const COLUMNS: &str =
@@ -80,9 +82,10 @@ pub async fn create(
     .bind(patient_id)
     .fetch_one(&mut *tx)
     .await?;
-    let serial: u64 = sqlx::query_scalar(
-        "SELECT CAST(COALESCE(MAX(queue_serial), 0) + 1 AS UNSIGNED) FROM visits
-         WHERE clinic_id = ? AND visit_date = ?",
+    let (serial, position): (u64, u64) = sqlx::query_as(
+        "SELECT CAST(COALESCE(MAX(queue_serial), 0) + 1 AS UNSIGNED),
+                CAST(COALESCE(MAX(queue_position), 0) + 1 AS UNSIGNED)
+         FROM visits WHERE clinic_id = ? AND visit_date = ?",
     )
     .bind(clinic_id)
     .bind(today)
@@ -91,8 +94,8 @@ pub async fn create(
 
     let res = sqlx::query(
         "INSERT INTO visits (clinic_id, patient_id, visit_no, visit_date, visit_type, queue_serial,
-            status, doctor_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            queue_position, status, doctor_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(clinic_id)
     .bind(patient_id)
@@ -100,6 +103,7 @@ pub async fn create(
     .bind(today)
     .bind(visit_type.as_str())
     .bind(serial)
+    .bind(position)
     .bind(status.as_str())
     .bind(doctor_id)
     .execute(&mut *tx)
@@ -170,21 +174,19 @@ pub async fn timeline(
         .fetch_all(pool)
         .await?;
 
-        let meds: Vec<(u64, String, Option<String>)> =
-            sqlx::query_as(sqlx::AssertSqlSafe(format!(
-                "SELECT prescription_id, brand, strength FROM prescription_medicines
-             WHERE prescription_id IN ({LATEST_RX}) ORDER BY prescription_id, sort_order"
-            )))
-            .bind(patient_id)
-            .fetch_all(pool)
-            .await?;
-        let mut meds_by_rx: HashMap<u64, Vec<String>> = HashMap::new();
-        for (rx_id, brand, strength) in meds {
-            let label = match strength {
-                Some(s) => format!("{brand} {s}"),
-                None => brand,
-            };
-            meds_by_rx.entry(rx_id).or_default().push(label);
+        let meds: Vec<MedRow> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "SELECT {MED_COLUMNS} FROM prescription_medicines
+             WHERE prescription_id IN ({LATEST_RX}) ORDER BY prescription_id, sort_order, id"
+        )))
+        .bind(patient_id)
+        .fetch_all(pool)
+        .await?;
+        let mut meds_by_rx: HashMap<u64, Vec<MedicineLine>> = HashMap::new();
+        for m in meds {
+            meds_by_rx
+                .entry(m.prescription_id)
+                .or_default()
+                .push(m.into());
         }
 
         for r in latest {

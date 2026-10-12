@@ -44,7 +44,8 @@
     "comingSoon": "Coming soon",
     "loading": "Loading…",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "close": "Close"
   },
   "profile": {
     "title": "Patient Profile",
@@ -79,7 +80,8 @@
       "in_consultation": "In consultation",
       "seen": "Seen",
       "cancelled": "Cancelled"
-    }
+    },
+    "repeat": "Repeat ℞"
   },
   "rx": {
     "title": "Prescription",
@@ -107,7 +109,15 @@
     "timing": "When",
     "duration": "Duration",
     "addMedicine": "Add medicine",
-    "removeMedicine": "Remove medicine"
+    "removeMedicine": "Remove medicine",
+    "previousVisits": "Previous Visits",
+    "copyMedicines": "Copy medicines",
+    "copySelected": "Copy {{n}} selected",
+    "noMedicines": "No medicines",
+    "repeatLast": "Repeat last ℞ ({{date}})",
+    "saveAndNext": "Save & Next Patient",
+    "nextPatient": "Next Patient",
+    "sameClass": "same class: {{cls}}"
   },
   "settings": {
     "profile": "My Profile",
@@ -119,5 +129,28 @@
     "clinicName": "Clinic name",
     "address": "Address",
     "saved": "Saved"
+  },
+  "queue": {
+    "empty": "Nobody in the queue yet today",
+    "searchToAdd": "Add patient to queue…",
+    "visitType": "Visit type",
+    "type": "Type",
+    "status": "Status",
+    "action": "Action",
+    "drag": "Drag to reorder",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "cancel": "Cancel visit",
+    "restore": "Restore",
+    "open": "Open",
+    "continue": "Continue"
+  },
+  "vitals": {
+    "title": "Vitals",
+    "short": "Vitals",
+    "record": "Record vitals",
+    "none": "No vitals recorded yet",
+    "noneFor": "No {{name}} readings yet",
+    "date": "Date"
   }
 }

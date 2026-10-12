@@ -6,8 +6,10 @@ pub mod medical_profile;
 pub mod medicines;
 pub mod patients;
 pub mod prescriptions;
+pub mod queue;
 pub mod users;
 pub mod visits;
+pub mod vitals;
 
 pub use sqlx::MySqlPool;
 use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};

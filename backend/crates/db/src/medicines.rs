@@ -60,3 +60,36 @@ pub async fn search(
     }
     Ok(out)
 }
+
+/// Fills in missing generic names from the catalogue, or from how this clinic wrote the
+/// same brand before, so the allergy check can match by generic (PM-09).
+pub async fn fill_generics(
+    pool: &MySqlPool,
+    clinic_id: u64,
+    lines: &mut [vd_domain::prescription::MedicineLine],
+) -> DbResult<()> {
+    for line in lines.iter_mut().filter(|l| l.generic.is_none()) {
+        let brand = line.brand.trim();
+        if brand.is_empty() {
+            continue;
+        }
+        let generic: Option<String> = sqlx::query_scalar(
+            "SELECT generic FROM (
+                SELECT generic, 0 AS rank_ FROM medicines
+                 WHERE brand = ? AND is_active = 1 AND generic <> ''
+                UNION ALL
+                SELECT pm.generic, 1 FROM prescription_medicines pm
+                 JOIN prescriptions p ON p.id = pm.prescription_id
+                 JOIN visits v ON v.id = p.visit_id
+                 WHERE v.clinic_id = ? AND pm.brand = ? AND pm.generic IS NOT NULL
+             ) g ORDER BY rank_ LIMIT 1",
+        )
+        .bind(brand)
+        .bind(clinic_id)
+        .bind(brand)
+        .fetch_optional(pool)
+        .await?;
+        line.generic = generic;
+    }
+    Ok(())
+}

@@ -1,10 +1,12 @@
 //! Business types and rules, independent of HTTP and the database.
 
+pub mod allergy;
 pub mod medical_profile;
 pub mod patient;
 pub mod prescription;
 pub mod text;
 pub mod visit;
+pub mod vitals;
 
 use chrono::{Duration, NaiveDate, Utc};
 

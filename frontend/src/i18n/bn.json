@@ -44,7 +44,8 @@
     "comingSoon": "শীঘ্রই আসছে",
     "loading": "লোড হচ্ছে…",
     "prev": "আগের",
-    "next": "পরের"
+    "next": "পরের",
+    "close": "বন্ধ করুন"
   },
   "profile": {
     "title": "রোগীর প্রোফাইল",
@@ -79,7 +80,8 @@
       "in_consultation": "পরামর্শ চলছে",
       "seen": "দেখা হয়েছে",
       "cancelled": "বাতিল"
-    }
+    },
+    "repeat": "℞ রিপিট"
   },
   "rx": {
     "title": "প্রেসক্রিপশন",
@@ -107,7 +109,15 @@
     "timing": "কখন",
     "duration": "কতদিন",
     "addMedicine": "ওষুধ যোগ করুন",
-    "removeMedicine": "ওষুধ বাদ দিন"
+    "removeMedicine": "ওষুধ বাদ দিন",
+    "previousVisits": "আগের ভিজিট",
+    "copyMedicines": "ওষুধ কপি করুন",
+    "copySelected": "নির্বাচিত {{n}}টি কপি করুন",
+    "noMedicines": "কোনো ওষুধ নেই",
+    "repeatLast": "শেষ ℞ রিপিট ({{date}})",
+    "saveAndNext": "সেভ ও পরের রোগী",
+    "nextPatient": "পরের রোগী",
+    "sameClass": "একই গ্রুপ: {{cls}}"
   },
   "settings": {
     "profile": "আমার প্রোফাইল",
@@ -119,5 +129,28 @@
     "clinicName": "ক্লিনিকের নাম",
     "address": "ঠিকানা",
     "saved": "সংরক্ষিত হয়েছে"
+  },
+  "queue": {
+    "empty": "আজ এখনও কেউ সিরিয়ালে নেই",
+    "searchToAdd": "রোগীকে সিরিয়ালে যোগ করুন…",
+    "visitType": "ভিজিটের ধরন",
+    "type": "ধরন",
+    "status": "অবস্থা",
+    "action": "কাজ",
+    "drag": "টেনে ক্রম বদলান",
+    "moveUp": "উপরে",
+    "moveDown": "নিচে",
+    "cancel": "ভিজিট বাতিল",
+    "restore": "ফিরিয়ে আনুন",
+    "open": "খুলুন",
+    "continue": "চালিয়ে যান"
+  },
+  "vitals": {
+    "title": "ভাইটালস",
+    "short": "ভাইটালস",
+    "record": "ভাইটালস লিখুন",
+    "none": "এখনও কোনো ভাইটালস নেই",
+    "noneFor": "এখনও {{name}} রিডিং নেই",
+    "date": "তারিখ"
   }
 }

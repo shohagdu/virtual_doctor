@@ -28,7 +28,8 @@ struct Row {
 }
 
 #[derive(sqlx::FromRow)]
-struct MedRow {
+pub(crate) struct MedRow {
+    pub prescription_id: u64,
     medicine_id: Option<u64>,
     brand: String,
     generic: Option<String>,
@@ -38,6 +39,25 @@ struct MedRow {
     timing: Option<String>,
     duration: Option<String>,
     notes: Option<String>,
+}
+
+pub(crate) const MED_COLUMNS: &str = "prescription_id, medicine_id, brand, generic, strength, \
+                                        form, dose_pattern, timing, duration, notes";
+
+impl From<MedRow> for MedicineLine {
+    fn from(m: MedRow) -> Self {
+        Self {
+            medicine_id: m.medicine_id,
+            brand: m.brand,
+            generic: m.generic,
+            strength: m.strength,
+            form: m.form,
+            dose_pattern: m.dose_pattern,
+            timing: m.timing,
+            duration: m.duration,
+            notes: m.notes,
+        }
+    }
 }
 
 fn list(v: Option<Json<Vec<String>>>) -> Vec<String> {
@@ -73,10 +93,10 @@ pub async fn latest(pool: &MySqlPool, visit_id: u64) -> Result<Prescription, App
         });
     };
 
-    let meds: Vec<MedRow> = sqlx::query_as(
-        "SELECT medicine_id, brand, generic, strength, form, dose_pattern, timing, duration, notes
-         FROM prescription_medicines WHERE prescription_id = ? ORDER BY sort_order, id",
-    )
+    let meds: Vec<MedRow> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        "SELECT {MED_COLUMNS} FROM prescription_medicines
+         WHERE prescription_id = ? ORDER BY sort_order, id"
+    )))
     .bind(r.id)
     .fetch_all(pool)
     .await
@@ -98,20 +118,7 @@ pub async fn latest(pool: &MySqlPool, visit_id: u64) -> Result<Prescription, App
             next_plan: list(r.next_plan),
             operation_notes: r.operation_notes,
             next_visit_date: r.next_visit_date,
-            medicines: meds
-                .into_iter()
-                .map(|m| MedicineLine {
-                    medicine_id: m.medicine_id,
-                    brand: m.brand,
-                    generic: m.generic,
-                    strength: m.strength,
-                    form: m.form,
-                    dose_pattern: m.dose_pattern,
-                    timing: m.timing,
-                    duration: m.duration,
-                    notes: m.notes,
-                })
-                .collect(),
+            medicines: meds.into_iter().map(Into::into).collect(),
         },
         updated_at: Some(r.updated_at.and_utc()),
     })

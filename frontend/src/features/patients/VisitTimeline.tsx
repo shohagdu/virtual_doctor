@@ -1,16 +1,20 @@
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { VisitSummary } from '../../api/types'
+import { StatusBadge } from '../../components/StatusBadge'
 import { fmtDate } from '../../utils/date'
+import { medicineName } from '../prescription/medicine'
 
-const statusClass: Record<VisitSummary['status'], string> = {
-  waiting: 'bg-amber-100 text-amber-800',
-  in_consultation: 'bg-blue-100 text-blue-800',
-  seen: 'bg-green-100 text-green-800',
-  cancelled: 'bg-slate-200 text-slate-600',
-}
-
-export function VisitTimeline({ visits, canOpen }: { visits: VisitSummary[]; canOpen: boolean }) {
+export function VisitTimeline({
+  visits,
+  canOpen,
+  onRepeat,
+}: {
+  visits: VisitSummary[]
+  canOpen: boolean
+  /** Repeat ℞ (PM-10): start today's prescription with this visit's medicines. */
+  onRepeat?: (visit: VisitSummary) => void
+}) {
   const { t } = useTranslation()
   if (visits.length === 0) return <p className="text-slate-500">{t('visits.none')}</p>
 
@@ -24,7 +28,7 @@ export function VisitTimeline({ visits, canOpen }: { visits: VisitSummary[]; can
               <span className="text-slate-500">
                 {t('visits.visitNo', { n: v.visit_no })} · {t(`visits.type.${v.visit_type}`)}
               </span>
-              <span className={`rounded px-2 text-xs ${statusClass[v.status]}`}>{t(`visits.status.${v.status}`)}</span>
+              <StatusBadge status={v.status} />
               {v.prescription && (
                 <span className="text-xs text-slate-500">
                   ℞ v{v.prescription.version}
@@ -38,15 +42,22 @@ export function VisitTimeline({ visits, canOpen }: { visits: VisitSummary[]; can
                 {v.prescription.complaints.length > 0 && (
                   <div className="text-slate-500">{v.prescription.complaints.join(', ')}</div>
                 )}
-                {v.prescription.medicines.length > 0 && <div>℞ {v.prescription.medicines.join(', ')}</div>}
+                {v.prescription.medicines.length > 0 && <div>℞ {v.prescription.medicines.map(medicineName).join(', ')}</div>}
               </>
             )}
           </div>
-          {canOpen && v.status !== 'cancelled' && (
-            <Link to={`/visits/${v.id}/prescription`} className="rounded border px-3 py-1 text-sm text-brand">
-              {v.prescription ? t('visits.viewRx') : t('visits.startRx')}
-            </Link>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {canOpen && v.status !== 'cancelled' && (
+              <Link to={`/visits/${v.id}/prescription`} className="rounded border px-3 py-1 text-sm text-brand">
+                {v.prescription ? t('visits.viewRx') : t('visits.startRx')}
+              </Link>
+            )}
+            {onRepeat && (v.prescription?.medicines.length ?? 0) > 0 && (
+              <button onClick={() => onRepeat(v)} className="rounded border px-3 py-1 text-sm text-brand">
+                ↻ {t('visits.repeat')}
+              </button>
+            )}
+          </div>
         </li>
       ))}
     </ol>

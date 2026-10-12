@@ -74,7 +74,7 @@ export interface VisitSummary extends Visit {
     locked: boolean
     complaints: string[]
     diagnosis: string[]
-    medicines: string[]
+    medicines: MedicineLine[]
     next_visit_date: string | null
   } | null
 }
@@ -84,6 +84,53 @@ export interface VisitContext {
   patient: Patient
   profile: MedicalProfile
   previous_visit_date: string | null
+  vitals: Vitals | null
+}
+
+/** BP mmHg, pulse /min, temp °F, weight kg, height cm, SpO₂ %, RBS mmol/L. */
+export interface Vitals {
+  bp_sys: number | null
+  bp_dia: number | null
+  pulse: number | null
+  temp: number | null
+  weight: number | null
+  height: number | null
+  bmi: number | null
+  spo2: number | null
+  rbs: number | null
+}
+
+export interface VitalsRecord extends Vitals {
+  visit_id: number
+  visit_date: string
+  recorded_at: string
+}
+
+export interface QueueEntry extends Visit {
+  patient: {
+    id: number
+    patient_code: string
+    title: string | null
+    name_en: string
+    name_bn: string | null
+    phone: string
+    dob: string
+    sex: Sex
+  }
+  has_allergy: boolean
+  has_vitals: boolean
+}
+
+export interface QueueToday {
+  counters: { today: number; waiting: number; in_consultation: number; seen: number; followups_due: number }
+  items: QueueEntry[]
+}
+
+export interface AllergyMatch {
+  brand: string
+  allergy: string
+  /** Shared drug class, or null for a direct name match. */
+  class: string | null
 }
 
 export interface MedicineLine {
