@@ -215,3 +215,127 @@ pub async fn search(
 
     Ok((rows.into_iter().map(Into::into).collect(), total))
 }
+
+/// LIKE pattern matching `term` anywhere, with LIKE's wildcards escaped.
+fn contains(term: &str) -> String {
+    let escaped = term
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_");
+    format!("%{}%", escaped.to_lowercase())
+}
+
+/// Patients matching smart-search filters (PM spec §7.2). Claude only turns the
+/// sentence into these filters; this query runs locally on the clinic's data.
+pub async fn filter(
+    pool: &MySqlPool,
+    clinic_id: u64,
+    f: &vd_domain::report::SearchFilters,
+    today: NaiveDate,
+) -> DbResult<Vec<Patient>> {
+    enum Arg {
+        Text(String),
+        Date(NaiveDate),
+    }
+    let mut sql = format!(
+        "SELECT {} FROM patients p LEFT JOIN patient_medical_profile m ON m.patient_id = p.id
+         WHERE p.clinic_id = ? AND p.deleted_at IS NULL",
+        COLUMNS
+            .split(", ")
+            .map(|c| format!("p.{}", c.trim()))
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+    let mut args: Vec<Arg> = vec![];
+    let any_like = |sql: &mut String, args: &mut Vec<Arg>, expr: &str, terms: &[String]| {
+        if terms.is_empty() {
+            return;
+        }
+        let parts = vec![format!("{expr} LIKE ?"); terms.len()].join(" OR ");
+        sql.push_str(&format!(" AND ({parts})"));
+        args.extend(terms.iter().map(|t| Arg::Text(contains(t))));
+    };
+
+    if let Some(sex) = &f.sex {
+        sql.push_str(" AND p.sex = ?");
+        args.push(Arg::Text(sex.clone()));
+    }
+    if let Some(min) = f.age_min {
+        sql.push_str(" AND p.dob <= ?");
+        args.push(Arg::Date(today - chrono::Months::new(12 * min as u32)));
+    }
+    if let Some(max) = f.age_max {
+        sql.push_str(" AND p.dob > ?");
+        args.push(Arg::Date(
+            today - chrono::Months::new(12 * (max as u32 + 1)),
+        ));
+    }
+    any_like(
+        &mut sql,
+        &mut args,
+        "LOWER(CAST(m.chronic_conditions AS CHAR))",
+        &f.chronic_terms,
+    );
+
+    let visit_filter = !f.diagnosis_terms.is_empty()
+        || !f.complaint_terms.is_empty()
+        || !f.medicine_terms.is_empty()
+        || f.visited_from.is_some()
+        || f.visited_to.is_some();
+    if visit_filter {
+        let mut sub = String::from(
+            " AND EXISTS (SELECT 1 FROM visits v LEFT JOIN prescriptions rx ON rx.visit_id = v.id
+              WHERE v.patient_id = p.id AND v.deleted_at IS NULL AND v.status <> 'cancelled'",
+        );
+        if let Some(d) = f.visited_from {
+            sub.push_str(" AND v.visit_date >= ?");
+            args.push(Arg::Date(d));
+        }
+        if let Some(d) = f.visited_to {
+            sub.push_str(" AND v.visit_date <= ?");
+            args.push(Arg::Date(d));
+        }
+        any_like(
+            &mut sub,
+            &mut args,
+            "LOWER(CAST(rx.diagnosis AS CHAR))",
+            &f.diagnosis_terms,
+        );
+        any_like(
+            &mut sub,
+            &mut args,
+            "LOWER(CAST(rx.complaints AS CHAR))",
+            &f.complaint_terms,
+        );
+        if !f.medicine_terms.is_empty() {
+            let parts = vec![
+                "LOWER(pm.brand) LIKE ? OR LOWER(COALESCE(pm.generic, '')) LIKE ?";
+                f.medicine_terms.len()
+            ]
+            .join(" OR ");
+            sub.push_str(&format!(
+                " AND EXISTS (SELECT 1 FROM prescription_medicines pm WHERE pm.prescription_id = rx.id AND ({parts}))"
+            ));
+            for t in &f.medicine_terms {
+                args.push(Arg::Text(contains(t)));
+                args.push(Arg::Text(contains(t)));
+            }
+        }
+        sub.push(')');
+        sql.push_str(&sub);
+    }
+    sql.push_str(" ORDER BY p.name_en LIMIT 100");
+
+    let mut q = sqlx::query_as::<_, PatientRow>(AssertSqlSafe(sql)).bind(clinic_id);
+    for a in args {
+        q = match a {
+            Arg::Text(t) => q.bind(t),
+            Arg::Date(d) => q.bind(d),
+        };
+    }
+    Ok(q.fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(Into::into)
+        .collect())
+}

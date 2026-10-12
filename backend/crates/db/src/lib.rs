@@ -1,5 +1,6 @@
 //! MySQL access (sqlx). Queries are runtime-checked so the crate builds without a live database.
 
+pub mod ai;
 pub mod appointments;
 pub mod audit;
 pub mod bills;
@@ -10,6 +11,7 @@ pub mod medicines;
 pub mod patients;
 pub mod prescriptions;
 pub mod queue;
+pub mod reports;
 pub mod settings;
 pub mod sms;
 pub mod users;

@@ -25,6 +25,16 @@ Specs live in [`Docs/`](Docs/README.md). Done so far (`Patient_Management_Spec.m
   sent by the background worker), billing (fees per visit type, discount by amount or % with
   reason, cash / bKash / Nagad / card, paid / due, receipt in English or Bangla) and the
   collection report. Settings for fees, chamber schedule, slots and SMS.
+- **Phase 4** — AI (Claude API, backend only): report upload (PDF / photo, camera, drag and
+  drop; photos shrunk in the browser; duplicates detected by hash), AI extraction of values,
+  a deterministic rule engine for Normal / Borderline / High / Low / Critical (lab range,
+  else seeded age/sex system ranges; critical alert banner; name-mismatch warning), doctor
+  verification table, streamed clinical analysis with tick / edit / reject suggestions
+  inserted into Diagnosis / Investigations / Advice (English + Bangla) / Next plan, report
+  short form for Investigations, prescription safety check (built-in rules + AI, dismiss with
+  reason), lab trends, Reports and AI Summary tabs, AI patient summary, AI smart search,
+  AI SMS wording, AI usage report, AI settings. Every call is logged with model, prompt
+  version and tokens; prompts are versioned in `prompt_versions`.
 
 ## Layout
 
@@ -99,6 +109,20 @@ Checks: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo
 | POST | `/api/v1/sms/{id}/retry` | Re-send a failed SMS |
 | GET / PUT | `/api/v1/visits/{id}/bill` | Bill + suggested fee / save `{fee, discount, discount_reason, paid, method}` |
 | GET | `/api/v1/reports/collection?from=&to=` | Doctor, Admin; totals by method + rows |
+| POST | `/api/v1/visits/{id}/reports` | Raw file body + `X-File-Name`; Doctor, Assistant; doctor uploads are read by AI |
+| GET | `/api/v1/visits/{id}/reports`, `/api/v1/patients/{id}/reports` | Values for Doctor only |
+| GET / DELETE | `/api/v1/reports/{id}` · GET `/reports/{id}/file` | Report / soft delete · original file |
+| POST | `/api/v1/reports/{id}/extract` | Doctor; (re)read with AI |
+| PUT | `/api/v1/reports/{id}/results` | Doctor; checked or manually entered values, re-graded |
+| POST | `/api/v1/visits/{id}/ai-analysis` | Doctor; SSE: `progress`, then `done` (analysis + suggestions) or `error` |
+| GET | `/api/v1/visits/{id}/ai-analysis/latest` | Doctor |
+| POST | `/api/v1/ai-suggestions/{id}/action` | `{action: accepted\|edited\|rejected, edited_text?, reason?}` |
+| POST | `/api/v1/visits/{id}/prescription/safety-check` | Doctor; `{medicines}` → warnings (rules + AI) |
+| GET | `/api/v1/patients/{id}/lab-trends?test=` | Doctor |
+| POST · GET | `/api/v1/patients/{id}/ai-summary` (SSE) · `/ai-summary/latest` | Doctor |
+| GET | `/api/v1/patients/smart-search?q=` | Doctor; returns the filters understood + patients |
+| POST | `/api/v1/followups/{id}/sms/ai-draft` | Reworded reminder (name filled in locally) |
+| GET | `/api/v1/ai/status`, `/api/v1/admin/ai-usage?from=&to=` | AI availability · usage (Doctor, Admin) |
 | GET | `/api/v1/medicines/search?q=` | Catalogue + medicines this clinic prescribed before |
 | GET / PATCH | `/api/v1/me`, PATCH `/api/v1/clinic` | Doctor/clinic details for the print header |
 
@@ -119,8 +143,16 @@ Set `SMS_PROVIDER` in `.env`: `log` (default; nothing is sent, sends are only lo
 `bulksmsbd` with `SMS_API_KEY` and `SMS_SENDER_ID`. Then turn SMS on in Settings. Messages
 are queued and sent by the background worker, with retries; failures show in Follow-ups.
 
-## Next (Phase 4)
+## AI
 
-AI patient summary, smart search, report module integration (`Patient_Management_Spec.md` §14).
-Still open from the roadmap: medicine brand database (the allergy check gets generics from
-it), prescription templates.
+Set `ANTHROPIC_API_KEY` in `.env` (model names: `CLAUDE_MODEL_DEFAULT`, `_COMPLEX`, `_FAST`).
+Without a key the app runs in manual mode: reports can still be uploaded and values typed in,
+and the built-in safety rules still run. AI can also be switched off per clinic in Settings.
+
+- Claude reads; the Rust rule engine decides the flags, so they are reproducible.
+- Patient name, phone, ID and address are never sent; only age and sex — plus, for report
+  reading, the report file itself (which may show the name printed by the lab).
+- The seeded reference ranges are common adult textbook values (children: critical limits
+  only). Review them before clinical use; clinic-specific rows go in `reference_ranges`.
+- Prompts are drafts to be validated against real de-identified reports (AI spec §17) before
+  doctors rely on them. HEIC photos are not converted yet (the upload asks for JPEG).

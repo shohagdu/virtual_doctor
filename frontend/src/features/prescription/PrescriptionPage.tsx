@@ -9,6 +9,11 @@ import { PatientInfoBar } from '../../components/PatientInfoBar'
 import { fmtDate, todayIso } from '../../utils/date'
 import { useVisits } from '../patients/api'
 import { useCallNext } from '../queue/api'
+import { useAiAvailable } from '../ai/api'
+import { AiSummary } from '../ai/AiSummary'
+import type { Insert } from '../reports/FindingsPanel'
+import { ReportDrawer } from '../reports/ReportDrawer'
+import { SafetyPanel } from '../reports/SafetyPanel'
 import { vitalsParts } from '../vitals/format'
 import { VitalsDialog } from '../vitals/VitalsDialog'
 import { addMedicines, emptyLine } from './medicine'
@@ -80,6 +85,9 @@ function PrescriptionEditor({
   const lastRx = previous.find((v) => (v.prescription?.medicines.length ?? 0) > 0)
   const [drawer, setDrawer] = useState(false)
   const [vitalsOpen, setVitalsOpen] = useState(false)
+  const [reportsOpen, setReportsOpen] = useState(false)
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const aiAvailable = useAiAvailable()
 
   const initial = useMemo(() => {
     const b = bodyOf(rx)
@@ -92,6 +100,20 @@ function PrescriptionEditor({
   const [allergyAck, setAllergyAck] = useState(false)
   const set = (patch: Partial<PrescriptionBody>) => {
     setBody((b) => ({ ...b, ...patch }))
+    setDirty(true)
+  }
+
+  // AI suggestions and report short forms the doctor ticked (AI spec FR-34); duplicates skipped.
+  const insert = (i: Insert) => {
+    const merge = (cur: string[], add: string[]) => [...cur, ...add.filter((x) => !cur.includes(x))]
+    // Merged against the latest state, so quick successive inserts all land.
+    setBody((b) => ({
+      ...b,
+      diagnosis: merge(b.diagnosis, i.diagnosis),
+      investigations: merge(b.investigations, i.investigations),
+      advice: merge(b.advice, i.advice),
+      next_plan: merge(b.next_plan, i.next_plan),
+    }))
     setDirty(true)
   }
 
@@ -153,6 +175,14 @@ function PrescriptionEditor({
             {dirty && ` · ${t('rx.unsaved')}`}
           </span>
           <div className="ml-auto flex flex-wrap gap-2">
+            <button onClick={() => setReportsOpen(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
+              📄 {t('reports.upload')}
+            </button>
+            {aiAvailable && (
+              <button onClick={() => setSummaryOpen(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
+                🤖 {t('ai.summariseHistory')}
+              </button>
+            )}
             <button onClick={() => setDrawer(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
               🕘 {t('rx.history')}
               {previous.length > 0 && ` (${previous.length})`}
@@ -244,7 +274,18 @@ function PrescriptionEditor({
             </div>
             {section('complaints', t('rx.complaints'))}
             {section('examination', t('rx.examination'))}
-            {section('investigations', t('rx.investigations'))}
+            <div className="relative">
+              {section('investigations', t('rx.investigations'))}
+              <button
+                type="button"
+                onClick={() => setReportsOpen(true)}
+                className="absolute top-0 right-6 text-sm"
+                title={t('reports.upload')}
+                aria-label={t('reports.upload')}
+              >
+                📄
+              </button>
+            </div>
             {section('diagnosis', t('rx.diagnosis'))}
             <ListSection title={t('profile.chronic')} items={profile.chronic_conditions} readOnly />
             <ListSection title={t('rx.drugHistory')} items={profile.long_term_medicines} readOnly />
@@ -277,7 +318,9 @@ function PrescriptionEditor({
                 readOnly={false}
               />
             </div>
+            <SafetyPanel visitId={visit.id} medicines={body.medicines} />
             <ListSection title={t('rx.advice')} items={body.advice} onChange={(advice) => set({ advice })} />
+            <ListSection title={t('rx.nextPlan')} items={body.next_plan} onChange={(next_plan) => set({ next_plan })} />
             <label className="block text-sm font-semibold">
               {t('rx.nextVisit')}
               <input
@@ -310,6 +353,35 @@ function PrescriptionEditor({
           }}
           onClose={() => setDrawer(false)}
         />
+      )}
+      {reportsOpen && (
+        <ReportDrawer
+          visitId={visit.id}
+          rx={{
+            complaints: body.complaints,
+            examination: body.examination,
+            diagnosis: body.diagnosis,
+            investigations: body.investigations,
+            medicines: body.medicines,
+          }}
+          aiAvailable={aiAvailable}
+          onInsert={insert}
+          onClose={() => setReportsOpen(false)}
+        />
+      )}
+      {summaryOpen && (
+        <div className="fixed inset-0 z-30 print:hidden" role="dialog" aria-label={t('ai.summaryTitle')}>
+          <div className="absolute inset-0 bg-black/30" onClick={() => setSummaryOpen(false)} />
+          <aside className="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-4 shadow-xl">
+            <div className="mb-3 flex items-center">
+              <h2 className="font-semibold">🤖 {t('ai.summaryTitle')}</h2>
+              <button onClick={() => setSummaryOpen(false)} className="ml-auto px-2 text-lg" aria-label={t('common.close')}>
+                ✕
+              </button>
+            </div>
+            <AiSummary patientId={String(patient.id)} available={aiAvailable} />
+          </aside>
+        </div>
       )}
       {vitalsOpen && <VitalsDialog visitId={visit.id} patientId={patient.id} onClose={() => setVitalsOpen(false)} />}
     </>

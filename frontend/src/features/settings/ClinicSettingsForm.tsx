@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { ChamberSession, ClinicSettings, Lang, SmsTemplate, VisitType } from '../../api/types'
 import { Card } from '../../components/Card'
 import { smsSegments } from '../../utils/sms'
 import { useClinicSettings, useSaveClinicSettings } from './api'
+import { useAiStatus } from '../ai/api'
 
 const input = 'mt-1 w-full rounded border px-3 py-2'
 const VISIT_TYPES: VisitType[] = ['new', 'followup', 'report']
@@ -22,6 +24,7 @@ export function ClinicSettingsForm() {
 function Form({ initial }: { initial: ClinicSettings }) {
   const { t } = useTranslation()
   const save = useSaveClinicSettings()
+  const ai = useAiStatus()
   const [s, setS] = useState(initial)
   const [saved, setSaved] = useState(false)
 
@@ -30,6 +33,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
     setSaved(false)
   }
   const setSms = (patch: Partial<ClinicSettings['sms']>) => set({ sms: { ...s.sms, ...patch } })
+  const setAi = (patch: Partial<ClinicSettings['ai']>) => set({ ai: { ...s.ai, ...patch } })
   const setSession = (i: number, patch: Partial<ChamberSession>) =>
     set({ schedule: s.schedule.map((x, j) => (j === i ? { ...x, ...patch } : x)) })
   const setTemplate = (key: (typeof TEMPLATES)[number], lang: Lang, text: string) =>
@@ -206,6 +210,40 @@ function Form({ initial }: { initial: ClinicSettings }) {
               })}
             </fieldset>
           ))}
+        </div>
+      </Card>
+
+      <Card
+        title={`🤖 ${t('settings.ai')}`}
+        actions={
+          <Link to="/ai-usage" className="text-sm text-brand">
+            {t('ai.usage')} →
+          </Link>
+        }
+      >
+        <div className="space-y-2 text-sm">
+          {ai.data && !ai.data.configured && <p className="rounded bg-amber-50 px-3 py-2 text-amber-800">{t('settings.aiNoKey')}</p>}
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={s.ai.enabled} onChange={(e) => setAi({ enabled: e.target.checked })} />
+            {t('settings.aiEnabled')}
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={s.ai.auto_extract} onChange={(e) => setAi({ auto_extract: e.target.checked })} />
+            {t('settings.aiAutoExtract')}
+          </label>
+          <label className="flex items-center gap-2">
+            {t('settings.aiAdviceLanguage')}
+            <select
+              value={s.ai.advice_language}
+              onChange={(e) => setAi({ advice_language: e.target.value as ClinicSettings['ai']['advice_language'] })}
+              className="rounded border bg-white px-2 py-1"
+            >
+              <option value="both">English + বাংলা</option>
+              <option value="bn">বাংলা</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <p className="text-xs text-slate-500">{t('settings.aiPrivacy')}</p>
         </div>
       </Card>
 

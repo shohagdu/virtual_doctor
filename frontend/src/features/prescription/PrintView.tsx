@@ -91,6 +91,7 @@ export function PrintView({
             ))}
           </ol>
           <Section title={t('rx.advice')} items={body.advice} />
+          <Section title={t('rx.nextPlan')} items={body.next_plan} />
           {body.next_visit_date && (
             <div className="mt-2">
               <b>{t('rx.nextVisit')}:</b> {fmtDate(body.next_visit_date)}

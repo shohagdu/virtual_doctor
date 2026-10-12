@@ -8,6 +8,5 @@ use vd_db::MySqlPool;
 pub struct AppState {
     pub pool: MySqlPool,
     pub config: Arc<Config>,
-    #[allow(dead_code)] // used by the AI endpoints (Phase 4)
     pub claude: ClaudeClient,
 }

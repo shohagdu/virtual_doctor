@@ -209,6 +209,7 @@ export interface SmsTemplate {
 }
 
 export interface ClinicSettings {
+  ai: { enabled: boolean; auto_extract: boolean; advice_language: 'en' | 'bn' | 'both' }
   fees: Record<VisitType, number>
   schedule: ChamberSession[]
   slot_minutes: number
@@ -336,4 +337,141 @@ export interface Collection {
     by_method: { method: PaymentMethod; paid: number; count: number }[]
   }
   rows: CollectionRow[]
+}
+
+// ---- Phase 4: AI report analysis, summary, search ----
+
+export type LabStatus = 'normal' | 'borderline' | 'high' | 'low' | 'critical' | 'abnormal'
+export type ReportStatus = 'uploaded' | 'extracting' | 'extracted' | 'verified' | 'failed'
+export type Confidence = 'high' | 'medium' | 'low'
+
+export interface ReportResult {
+  id: number
+  test_code: string
+  test_name: string
+  value_text: string
+  value_num: number | null
+  unit: string | null
+  ref_range_text: string | null
+  lab_flag: string | null
+  range_source: 'lab' | 'system' | null
+  status: LabStatus | null
+  confidence: Confidence | null
+  edited_by_doctor: boolean
+}
+
+export interface Report {
+  id: number
+  patient_id: number
+  visit_id: number | null
+  report_type: string | null
+  lab_name: string | null
+  report_date: string | null
+  mime_type: string
+  original_name: string | null
+  status: ReportStatus
+  impression: string | null
+  name_mismatch: boolean
+  unreadable_parts: string[]
+  error: string | null
+  created_at: string
+  results: ReportResult[]
+}
+
+export interface ResultInput {
+  test_name: string
+  value_text: string
+  unit: string | null
+  ref_range_text: string | null
+  lab_flag: string | null
+  confidence: Confidence | null
+  edited: boolean
+}
+
+export type SuggestionSection = 'diagnosis' | 'investigation' | 'advice' | 'next_plan' | 'red_flag' | 'safety'
+
+export interface Suggestion {
+  id: number
+  section: SuggestionSection
+  text_en: string
+  text_bn: string | null
+  likelihood: string | null
+  source_refs: string[]
+  action: 'pending' | 'accepted' | 'edited' | 'rejected'
+  edited_text: string | null
+  reason: string | null
+}
+
+export interface ClinicalAnalysis {
+  summary: string
+  report_summaries: { report: string; summary: string }[]
+  findings: { text: string; source: string[] }[]
+  possible_issues: { name: string; reason: string; likelihood: string | null }[]
+  suggested_investigations: { name: string; reason: string }[]
+  advice_en: string[]
+  advice_bn: string[]
+  next_plan: string | null
+  red_flags: string[]
+  conflicts: string[]
+  trend_comments: string[]
+}
+
+export interface AnalysisView {
+  id: number
+  content: ClinicalAnalysis
+  claude_model: string
+  prompt_version: string
+  created_at: string
+  suggestions: Suggestion[]
+}
+
+export interface SafetyWarning {
+  id: number
+  medicines: string[]
+  kind: string
+  severity: 'high' | 'moderate' | 'low' | string
+  message: string
+  source: string[]
+  origin: 'rules' | 'ai'
+}
+
+export interface PatientSummary {
+  one_line: string
+  active_problems: string[]
+  recurring_issues: string[]
+  lab_trends: string[]
+  medicines_history: string[]
+  alerts: string[]
+  points_to_check: string[]
+}
+
+export interface SavedSummary {
+  id: number
+  content: PatientSummary
+  claude_model: string
+  prompt_version: string
+  created_at: string
+}
+
+export interface SearchFilters {
+  sex?: 'M' | 'F'
+  age_min?: number
+  age_max?: number
+  diagnosis_terms?: string[]
+  complaint_terms?: string[]
+  medicine_terms?: string[]
+  chronic_terms?: string[]
+  visited_from?: string
+  visited_to?: string
+}
+
+export interface AiUsageRow {
+  day: string
+  analysis_type: string
+  claude_model: string
+  calls: number
+  failed: number
+  input_tokens: number
+  output_tokens: number
+  cache_read_tokens: number
 }

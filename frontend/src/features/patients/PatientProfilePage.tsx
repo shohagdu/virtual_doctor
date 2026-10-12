@@ -7,12 +7,17 @@ import { PatientInfoBar } from '../../components/PatientInfoBar'
 import { todayIso } from '../../utils/date'
 import { useAuth } from '../auth/authStore'
 import { VitalsTab } from '../vitals/VitalsTab'
+import { useAiAvailable } from '../ai/api'
+import { AiSummary } from '../ai/AiSummary'
+import { ReportsTab } from '../reports/ReportsTab'
 import { usePatientAppointments } from '../appointments/api'
 import { fmtDate } from '../../utils/date'
 import { useMedicalProfile, usePatient, useStartVisit, useVisits } from './api'
 import { MedicalProfilePanel } from './MedicalProfilePanel'
 import { PatientFormDialog } from './PatientFormDialog'
 import { VisitTimeline } from './VisitTimeline'
+
+type Tab = 'visits' | 'vitals' | 'reports' | 'ai'
 
 export function PatientProfilePage() {
   const { id = '' } = useParams()
@@ -27,7 +32,9 @@ export function PatientProfilePage() {
   const appointments = usePatientAppointments(id)
   const upcoming = appointments.data?.filter((a) => a.status === 'booked') ?? []
   const [editing, setEditing] = useState(false)
-  const [tab, setTab] = useState<'visits' | 'vitals'>('visits')
+  const [tab, setTab] = useState<Tab>('visits')
+  const aiAvailable = useAiAvailable()
+  const tabs: Tab[] = role === 'doctor' ? ['visits', 'vitals', 'reports', 'ai'] : ['visits', 'vitals', 'reports']
 
   if (isLoading || !p) return <p className="text-slate-500">{t('common.loading')}</p>
 
@@ -109,8 +116,8 @@ export function PatientProfilePage() {
           )}
           <Card
             title={
-              <span className="flex gap-1" role="tablist">
-                {(['visits', 'vitals'] as const).map((k) => (
+              <span className="flex flex-wrap gap-1" role="tablist">
+                {tabs.map((k) => (
                   <button
                     key={k}
                     role="tab"
@@ -118,7 +125,7 @@ export function PatientProfilePage() {
                     onClick={() => setTab(k)}
                     className={`rounded px-3 py-1 text-sm ${tab === k ? 'bg-brand text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                   >
-                    {t(`${k}.title`)}
+                    {k === 'ai' ? `🤖 ${t('ai.summaryTitle')}` : t(`${k}.title`)}
                   </button>
                 ))}
               </span>
@@ -126,6 +133,10 @@ export function PatientProfilePage() {
           >
             {tab === 'vitals' ? (
               <VitalsTab patientId={id} />
+            ) : tab === 'reports' ? (
+              <ReportsTab patientId={id} clinical={role === 'doctor'} />
+            ) : tab === 'ai' ? (
+              <AiSummary patientId={id} available={aiAvailable} />
             ) : visits.data ? (
               <VisitTimeline
                 visits={visits.data}

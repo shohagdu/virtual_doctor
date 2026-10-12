@@ -1,3 +1,5 @@
+mod ai;
+mod analysis;
 mod appointments;
 mod auth;
 mod bills;
@@ -8,11 +10,13 @@ mod medicines;
 mod notify;
 mod patients;
 mod queue;
+mod reports;
 mod settings;
+mod summary;
 mod visits;
 
 use axum::Router;
-use axum::routing::{get, patch, post};
+use axum::routing::{get, patch, post, put};
 
 use crate::state::AppState;
 
@@ -23,6 +27,7 @@ pub fn router(state: AppState) -> Router {
         .route("/clinic", patch(me::update_clinic))
         .route("/settings", get(settings::show).put(settings::update))
         .route("/patients", get(patients::list).post(patients::create))
+        .route("/patients/smart-search", get(summary::smart_search))
         .route(
             "/patients/{id}",
             get(patients::show).patch(patients::update),
@@ -36,6 +41,28 @@ pub fn router(state: AppState) -> Router {
             get(visits::timeline).post(visits::start),
         )
         .route("/patients/{id}/vitals/trend", get(visits::vitals_trend))
+        .route("/patients/{id}/reports", get(reports::for_patient))
+        .route("/patients/{id}/lab-trends", get(reports::trends))
+        .route("/patients/{id}/ai-summary", post(summary::generate))
+        .route("/patients/{id}/ai-summary/latest", get(summary::latest))
+        .route(
+            "/visits/{id}/reports",
+            get(reports::for_visit).post(reports::upload),
+        )
+        .route("/reports/{id}", get(reports::show).delete(reports::delete))
+        .route("/reports/{id}/file", get(reports::file))
+        .route("/reports/{id}/extract", post(reports::extract))
+        .route("/reports/{id}/results", put(reports::save_results))
+        .route("/visits/{id}/ai-analysis", post(analysis::run))
+        .route("/visits/{id}/ai-analysis/latest", get(analysis::latest))
+        .route("/ai-suggestions/{id}/action", post(analysis::act))
+        .route(
+            "/visits/{id}/prescription/safety-check",
+            post(analysis::safety),
+        )
+        .route("/ai/status", get(ai::status))
+        .route("/admin/ai-usage", get(ai::usage))
+        .route("/followups/{id}/sms/ai-draft", post(summary::sms_draft))
         .route(
             "/patients/{id}/appointments",
             get(appointments::for_patient),
@@ -79,3 +106,5 @@ pub fn router(state: AppState) -> Router {
         .nest("/api/v1", api)
         .with_state(state)
 }
+
+pub use ai::register_prompts;

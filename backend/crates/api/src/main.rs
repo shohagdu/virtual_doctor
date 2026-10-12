@@ -38,6 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     vd_jobs::spawn(pool.clone(), &config.sms);
+    routes::register_prompts(&pool).await;
 
     let state = AppState {
         pool,

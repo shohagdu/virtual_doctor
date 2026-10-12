@@ -5,6 +5,7 @@ import type { Followup, SmsDraft } from '../../api/types'
 import { fullName } from '../../utils/patient'
 import { smsSegments } from '../../utils/sms'
 import { useSendSms, useSmsDraft } from './api'
+import { useAiAvailable, useSmsAiDraft } from '../ai/api'
 
 /** Reminder SMS from the clinic's template, reviewed (and editable) before sending (§7.3). */
 export function SmsDialog({ followup, onClose }: { followup: Followup; onClose: () => void }) {
@@ -40,6 +41,8 @@ function Form({ followup, draft, onClose }: { followup: Followup; draft: SmsDraf
   const { t } = useTranslation()
   const [body, setBody] = useState(draft.body)
   const send = useSendSms()
+  const aiAvailable = useAiAvailable()
+  const aiDraft = useSmsAiDraft()
   const blocked = !draft.enabled || !draft.phone_ok
 
   const submit = async () => {
@@ -79,6 +82,17 @@ function Form({ followup, draft, onClose }: { followup: Followup; draft: SmsDraf
             {t('settings.smsCount', { chars: [...body].length, parts: smsSegments(body) })}
           </span>
         </label>
+        {aiAvailable && (
+          <button
+            type="button"
+            onClick={async () => setBody((await aiDraft.mutateAsync(followup.id)).body)}
+            disabled={aiDraft.isPending}
+            className="rounded border border-indigo-300 px-2 py-1 text-xs text-indigo-700 disabled:opacity-50"
+          >
+            ✨ {aiDraft.isPending ? t('ai.writing') : t('ai.rewordSms')}
+          </button>
+        )}
+        {aiDraft.isError && <p className="text-sm text-red-600">{aiDraft.error.message}</p>}
         {send.isError && <p className="text-sm text-red-600">{send.error.message}</p>}
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="rounded border px-4 py-2">

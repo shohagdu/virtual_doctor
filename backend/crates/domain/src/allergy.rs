@@ -143,6 +143,15 @@ fn classes_in(text: &str, with_keys: bool) -> impl Iterator<Item = &'static Drug
     })
 }
 
+/// Drug classes a medicine name (brand or generic, any case) belongs to.
+pub fn drug_classes(name: &str) -> Vec<&'static str> {
+    let n = name.trim().to_lowercase();
+    if n.chars().count() < 3 {
+        return vec![];
+    }
+    classes_in(&n, false).map(|c| c.name).collect()
+}
+
 /// Medicines that match a recorded allergy, by name or by drug class. An allergy to
 /// one member (e.g. "Amoxicillin") flags the whole class (e.g. Flucloxacillin).
 /// `generic` should be filled in from the medicine catalogue before calling.
@@ -247,6 +256,12 @@ mod tests {
             &allergies(&["Penicillin", "Sulfa", "Dust"]),
         );
         assert!(m.is_empty());
+    }
+
+    #[test]
+    fn names_drug_classes() {
+        assert_eq!(drug_classes("Diclofenac Sodium"), vec!["NSAIDs"]);
+        assert!(drug_classes("Paracetamol").is_empty());
     }
 
     #[test]

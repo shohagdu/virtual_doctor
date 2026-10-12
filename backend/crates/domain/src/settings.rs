@@ -18,6 +18,38 @@ pub struct ClinicSettings {
     /// Most appointments booked for one day; `None` means no limit.
     pub daily_limit: Option<u16>,
     pub sms: SmsSettings,
+    pub ai: AiSettings,
+}
+
+/// AI features (AI spec §13, PM spec §7.4).
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
+pub struct AiSettings {
+    /// All AI features on or off for the clinic.
+    pub enabled: bool,
+    /// Extract values as soon as a doctor uploads a report.
+    pub auto_extract: bool,
+    /// Patient advice language in AI suggestions.
+    pub advice_language: AdviceLanguage,
+}
+
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum AdviceLanguage {
+    En,
+    Bn,
+    #[default]
+    Both,
+}
+
+impl Default for AiSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            auto_extract: true,
+            advice_language: AdviceLanguage::Both,
+        }
+    }
 }
 
 /// Consultation fees in taka by visit type (§5.8).
@@ -162,6 +194,7 @@ impl Default for ClinicSettings {
             slot_minutes: 10,
             daily_limit: None,
             sms: SmsSettings::default(),
+            ai: AiSettings::default(),
         }
     }
 }
