@@ -7,6 +7,7 @@ import { PatientProfilePage } from '../features/patients/PatientProfilePage'
 import { PrescriptionPage } from '../features/prescription/PrescriptionPage'
 import { AppointmentsPage } from '../features/appointments/AppointmentsPage'
 import { FollowupsPage } from '../features/followups/FollowupsPage'
+import { CollectionPage } from '../features/billing/CollectionPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { Layout } from './Layout'
 
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: '/visits/:id/prescription', element: <PrescriptionPage /> },
       { path: '/appointments', element: <AppointmentsPage /> },
       { path: '/followups', element: <FollowupsPage /> },
+      { path: '/collection', element: <CollectionPage /> },
       { path: '/settings', element: <SettingsPage /> },
     ],
   },

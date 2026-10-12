@@ -95,3 +95,14 @@ pub async fn update_profile(
         .await?;
     Ok(())
 }
+
+/// Name used for {doctor} in SMS text: the clinic's first active doctor.
+pub async fn clinic_doctor_name(pool: &MySqlPool, clinic_id: u64) -> DbResult<Option<String>> {
+    sqlx::query_scalar(
+        "SELECT name FROM users WHERE clinic_id = ? AND role = 'doctor' AND is_active = 1
+         ORDER BY id LIMIT 1",
+    )
+    .bind(clinic_id)
+    .fetch_optional(pool)
+    .await
+}

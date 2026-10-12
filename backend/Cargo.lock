@@ -1801,6 +1801,7 @@ dependencies = [
  "rustls-platform-verifier",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "sync_wrapper",
  "tokio",
  "tokio-rustls",
@@ -2902,6 +2903,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "serde",
+ "serde_json",
  "sqlx",
  "tracing",
  "vd-common",
@@ -2914,6 +2916,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "serde",
+ "serde_json",
  "thiserror",
  "vd-common",
 ]
@@ -2922,9 +2925,13 @@ dependencies = [
 name = "vd-jobs"
 version = "0.1.0"
 dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
  "sqlx",
  "tokio",
  "tracing",
+ "vd-common",
  "vd-db",
 ]
 

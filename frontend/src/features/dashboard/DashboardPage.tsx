@@ -5,7 +5,9 @@ import type { QueueEntry, VisitType } from '../../api/types'
 import { Card } from '../../components/Card'
 import { StatusBadge } from '../../components/StatusBadge'
 import { ageText } from '../../utils/age'
+import { fullName } from '../../utils/patient'
 import { useAuth } from '../auth/authStore'
+import { BillDialog } from '../billing/BillDialog'
 import { usePatients } from '../patients/api'
 import { PatientFormDialog } from '../patients/PatientFormDialog'
 import { useAddToQueue, useQueueToday, useUpdateQueue } from '../queue/api'
@@ -116,7 +118,7 @@ function AddToQueue() {
               {data.items.map((p) => (
                 <li key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm">
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium">{[p.title, p.name_en].filter(Boolean).join(' ')}</div>
+                    <div className="font-medium">{fullName(p)}</div>
                     <div className="text-xs text-slate-500">
                       {p.patient_code} · {ageText(p.dob)} / {p.sex} · {p.phone}
                     </div>
@@ -144,6 +146,7 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
   const role = useAuth((s) => s.user?.role)
   const update = useUpdateQueue()
   const [vitalsFor, setVitalsFor] = useState<QueueEntry | null>(null)
+  const [billFor, setBillFor] = useState<QueueEntry | null>(null)
   const [dragId, setDragId] = useState<number | null>(null)
   const waiting = items.filter((v) => v.status === 'waiting')
 
@@ -204,7 +207,7 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
                   </td>
                   <td className="py-2 pr-3">
                     <Link to={`/patients/${v.patient.id}`} className="text-brand hover:underline">
-                      {[v.patient.title, v.patient.name_en].filter(Boolean).join(' ')}
+                      {fullName(v.patient)}
                     </Link>
                     {v.has_allergy && (
                       <span className="ml-1 rounded bg-red-600 px-1 text-xs text-white" title={t('profile.allergies')}>
@@ -237,6 +240,24 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
                         <button onClick={() => setVitalsFor(v)} className="rounded border px-2 py-1 text-xs">
                           {v.has_vitals ? '✔ ' : '➕ '}
                           {t('vitals.short')}
+                        </button>
+                      )}
+                      {v.status !== 'cancelled' && (
+                        <button
+                          onClick={() => setBillFor(v)}
+                          className={`rounded border px-2 py-1 text-xs ${
+                            v.bill_status === 'paid'
+                              ? 'border-green-600 text-green-700'
+                              : v.bill_status === 'due'
+                                ? 'border-amber-600 text-amber-700'
+                                : ''
+                          }`}
+                        >
+                          {v.bill_status === 'paid'
+                            ? `✔ ${t('billing.statusPaid')}`
+                            : v.bill_status === 'due'
+                              ? `৳ ${t('billing.statusDue')}`
+                              : `💳 ${t('billing.short')}`}
                         </button>
                       )}
                       {isWaiting && (
@@ -285,6 +306,15 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
           </tbody>
         </table>
       </div>
+      {billFor && (
+        <BillDialog
+          visitId={billFor.id}
+          visitDate={billFor.visit_date}
+          visitType={billFor.visit_type}
+          patient={billFor.patient}
+          onClose={() => setBillFor(null)}
+        />
+      )}
       {vitalsFor && (
         <VitalsDialog visitId={vitalsFor.id} patientId={vitalsFor.patient.id} onClose={() => setVitalsFor(null)} />
       )}

@@ -129,6 +129,8 @@ pub struct QueueEntry {
     pub patient: QueuePatient,
     pub has_allergy: bool,
     pub has_vitals: bool,
+    /// "paid" or "due" once a bill exists (§5.8).
+    pub bill_status: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]

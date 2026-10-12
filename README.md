@@ -17,6 +17,14 @@ Specs live in [`Docs/`](Docs/README.md). Done so far (`Patient_Management_Spec.m
   medicines, Repeat ℞ (profile timeline and "Repeat last ℞"), Save & Next Patient, and
   allergy warnings by name **and drug class** (penicillins, cephalosporins, sulfonamides,
   NSAIDs, macrolides, quinolones, tetracyclines, opioids), enforced on save.
+- **Phase 3** — appointments (day / week / list, slots from the chamber schedule, daily
+  limit, book / reschedule / no-show / cancel / restore, Arrived → today's queue), follow-ups
+  due (Today / Overdue / This week / Done, call, SMS, came / missed, overdue chronic patients
+  highlighted, auto "came" when the patient is queued), SMS (Bangla / English templates,
+  booking confirmation, day-before reminder, follow-up reminder, sent / failed with retry,
+  sent by the background worker), billing (fees per visit type, discount by amount or % with
+  reason, cash / bKash / Nagad / card, paid / due, receipt in English or Bangla) and the
+  collection report. Settings for fees, chamber schedule, slots and SMS.
 
 ## Layout
 
@@ -79,6 +87,18 @@ Checks: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo
 | GET / PUT | `/api/v1/visits/{id}/vitals` | Doctor, Assistant; BMI calculated on the server |
 | GET | `/api/v1/patients/{id}/vitals/trend` | Doctor, Assistant |
 | POST | `/api/v1/visits/{id}/allergy-check` | Doctor; `{medicines}` → matches. ℞ PUT needs `allergy_ack: true` when any match |
+| GET / PUT | `/api/v1/settings` | Fees, chamber schedule, slots, SMS; PUT Doctor, Admin |
+| GET | `/api/v1/appointments?from=&to=` | Clinic-local dates, up to 62 days |
+| POST | `/api/v1/appointments` | `{patient_id, date, time, visit_type, notes}`; 409 if the slot / day / patient is taken |
+| GET | `/api/v1/appointments/slots?date=` | Slots from the chamber schedule, with taken / past |
+| PATCH | `/api/v1/appointments/{id}` | `{status}` (arrived → queue, no_show, cancelled, booked) or `{date, time}` to reschedule |
+| GET | `/api/v1/patients/{id}/appointments` | From today on |
+| GET | `/api/v1/followups?bucket=today\|overdue\|week\|done` | With counts; diagnosis for Doctor only |
+| PATCH | `/api/v1/followups/{id}` | `{status: came\|missed\|pending}` |
+| GET / POST | `/api/v1/followups/{id}/sms` | Draft from the template / send `{body}` |
+| POST | `/api/v1/sms/{id}/retry` | Re-send a failed SMS |
+| GET / PUT | `/api/v1/visits/{id}/bill` | Bill + suggested fee / save `{fee, discount, discount_reason, paid, method}` |
+| GET | `/api/v1/reports/collection?from=&to=` | Doctor, Admin; totals by method + rows |
 | GET | `/api/v1/medicines/search?q=` | Catalogue + medicines this clinic prescribed before |
 | GET / PATCH | `/api/v1/me`, PATCH `/api/v1/clinic` | Doctor/clinic details for the print header |
 
@@ -93,8 +113,14 @@ docker compose exec backend vd-api create-user admin@clinic.bd "Admin" admin <pa
 Put TLS (e.g. Let's Encrypt) in front of the `nginx` service. MySQL is not published to the host.
 Backups are written daily to `./backups`; copy them off-server, encrypted.
 
-## Next (Phase 3)
+## SMS
 
-Appointments, follow-up list and reminders, SMS, billing (`Patient_Management_Spec.md` §14).
+Set `SMS_PROVIDER` in `.env`: `log` (default; nothing is sent, sends are only logged) or
+`bulksmsbd` with `SMS_API_KEY` and `SMS_SENDER_ID`. Then turn SMS on in Settings. Messages
+are queued and sent by the background worker, with retries; failures show in Follow-ups.
+
+## Next (Phase 4)
+
+AI patient summary, smart search, report module integration (`Patient_Management_Spec.md` §14).
 Still open from the roadmap: medicine brand database (the allergy check gets generics from
 it), prescription templates.

@@ -10,6 +10,29 @@ pub struct Config {
     pub cors_origin: Option<String>,
     pub storage_dir: String,
     pub claude: ClaudeConfig,
+    pub sms: SmsConfig,
+}
+
+/// SMS gateway (PM-17). `provider` is "log" (development: nothing is sent, messages
+/// are only logged) or "bulksmsbd".
+#[derive(Clone)]
+pub struct SmsConfig {
+    pub provider: String,
+    pub api_key: Option<String>,
+    pub sender_id: Option<String>,
+    pub base_url: String,
+}
+
+// Never print the API key.
+impl std::fmt::Debug for SmsConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SmsConfig")
+            .field("provider", &self.provider)
+            .field("api_key", &self.api_key.as_ref().map(|_| "***"))
+            .field("sender_id", &self.sender_id)
+            .field("base_url", &self.base_url)
+            .finish()
+    }
 }
 
 /// Claude API settings. Model names stay configurable (AI spec §8.2).
@@ -62,6 +85,12 @@ impl Config {
                 model_default: or("CLAUDE_MODEL_DEFAULT", "claude-sonnet-5-5"),
                 model_complex: or("CLAUDE_MODEL_COMPLEX", "claude-opus-5-5"),
                 model_fast: or("CLAUDE_MODEL_FAST", "claude-haiku-5-5"),
+            },
+            sms: SmsConfig {
+                provider: or("SMS_PROVIDER", "log"),
+                api_key: env::var("SMS_API_KEY").ok().filter(|s| !s.is_empty()),
+                sender_id: env::var("SMS_SENDER_ID").ok().filter(|s| !s.is_empty()),
+                base_url: or("SMS_BASE_URL", "https://bulksmsbd.net"),
             },
         })
     }

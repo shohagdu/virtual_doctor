@@ -16,6 +16,7 @@ export function usePatient(id: string) {
   return useQuery({
     queryKey: ['patient', id],
     queryFn: () => api<Patient>(`/patients/${id}`),
+    enabled: !!id,
   })
 }
 

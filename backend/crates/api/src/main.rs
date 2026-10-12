@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return create_user(&pool, &args[1..]).await;
     }
 
-    vd_jobs::spawn(pool.clone());
+    vd_jobs::spawn(pool.clone(), &config.sms);
 
     let state = AppState {
         pool,

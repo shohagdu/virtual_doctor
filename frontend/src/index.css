@@ -35,4 +35,8 @@ body {
   body {
     background: white;
   }
+  /* A receipt being printed replaces the whole app on paper. */
+  body:has(> .print-sheet) > #root {
+    display: none;
+  }
 }

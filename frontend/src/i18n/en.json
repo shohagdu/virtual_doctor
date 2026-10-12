@@ -7,7 +7,8 @@
     "patients": "Patients",
     "appointments": "Appointments",
     "followups": "Follow-ups",
-    "settings": "Settings"
+    "settings": "Settings",
+    "collection": "Collection"
   },
   "auth": {
     "login": "Login",
@@ -128,7 +129,31 @@
     "bmdc": "BMDC Reg. No.",
     "clinicName": "Clinic name",
     "address": "Address",
-    "saved": "Saved"
+    "saved": "Saved",
+    "fees": "Visit fees",
+    "appointments": "Appointment slots",
+    "slotMinutes": "Slot length (minutes)",
+    "dailyLimit": "Daily limit",
+    "noLimit": "No limit",
+    "schedule": "Chamber schedule",
+    "addSession": "Add session",
+    "noSchedule": "No schedule set — appointments can be booked at any time.",
+    "day": "Day",
+    "from": "From",
+    "to": "To",
+    "removeSession": "Remove session",
+    "sms": "SMS",
+    "smsEnabled": "Send SMS",
+    "smsConfirm": "Confirm bookings by SMS",
+    "smsRemind": "Remind the day before (10 AM)",
+    "smsLanguage": "Language",
+    "smsPlaceholders": "Placeholders: {name} {date} {time} {doctor} {clinic} {phone}. SMS never includes a diagnosis.",
+    "tpl": {
+      "appointment_confirm": "Appointment confirmation",
+      "appointment_reminder": "Appointment reminder",
+      "followup_reminder": "Follow-up reminder"
+    },
+    "smsCount": "{{chars}} characters · {{parts}} SMS"
   },
   "queue": {
     "empty": "Nobody in the queue yet today",
@@ -152,5 +177,121 @@
     "none": "No vitals recorded yet",
     "noneFor": "No {{name}} readings yet",
     "date": "Date"
+  },
+  "days": {
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  },
+  "billing": {
+    "title": "Bill",
+    "short": "Bill",
+    "fee": "Fee",
+    "discount": "Discount",
+    "discountReason": "Reason for discount",
+    "paid": "Paid",
+    "method": "Payment method",
+    "methods": {
+      "cash": "Cash",
+      "bkash": "bKash",
+      "nagad": "Nagad",
+      "card": "Card"
+    },
+    "payable": "Payable",
+    "due": "Due",
+    "status": "Status",
+    "statusDue": "Due",
+    "statusPaid": "Paid",
+    "saved": "Saved — receipt {{no}}",
+    "receiptLanguage": "Receipt language",
+    "saveAndPrint": "Save & print receipt",
+    "receipt": "MONEY RECEIPT",
+    "receiptNo": "Receipt no.",
+    "date": "Date",
+    "receivedBy": "Received by",
+    "collection": "Collection report",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisMonth": "This month",
+    "print": "Print",
+    "collected": "Collected",
+    "bills": "Bills",
+    "byMethod": "By payment method",
+    "nBills_one": "{{count}} bill",
+    "nBills_other": "{{count}} bills",
+    "none": "No bills in this period.",
+    "total": "Total"
+  },
+  "appointments": {
+    "book": "Book appointment",
+    "move": "Reschedule",
+    "change": "Change",
+    "date": "Date",
+    "time": "Time",
+    "bookedOf": "{{n}} of {{limit}} booked",
+    "nBooked_one": "{{count}} booked",
+    "nBooked_other": "{{count}} booked",
+    "closed": "The chamber is closed this day.",
+    "taken": "Already booked",
+    "notes": "Note",
+    "view": {
+      "day": "Day",
+      "week": "Week",
+      "list": "List"
+    },
+    "noneDay": "No appointments this day.",
+    "noneRange": "No appointments in these days.",
+    "nextDays_one": "Next {{count}} day",
+    "nextDays_other": "Next {{count}} days",
+    "status": {
+      "booked": "Booked",
+      "arrived": "Arrived",
+      "seen": "Seen",
+      "no_show": "No-show",
+      "cancelled": "Cancelled"
+    },
+    "smsSent": "Confirmation SMS sent",
+    "arrived": "Arrived",
+    "inQueue": "In queue",
+    "upcoming": "Upcoming appointment"
+  },
+  "followups": {
+    "bucket": {
+      "today": "Today",
+      "overdue": "Overdue",
+      "week": "This week",
+      "done": "Done"
+    },
+    "empty": {
+      "today": "No follow-ups due today.",
+      "overdue": "No overdue follow-ups.",
+      "week": "No follow-ups due this week.",
+      "done": "Nothing marked came or missed in the last 30 days."
+    },
+    "due": "Due",
+    "lastVisit": "Last visit",
+    "sms": "SMS",
+    "autoCame": "A follow-up is marked Came automatically when the patient is queued within a week of the due date (or after it).",
+    "daysOverdue_one": "{{count}} day overdue",
+    "daysOverdue_other": "{{count}} days overdue",
+    "status": {
+      "pending": "Pending",
+      "came": "Came",
+      "missed": "Missed"
+    },
+    "reopen": "Reopen",
+    "smsTitle": "Follow-up reminder",
+    "smsOff": "SMS is turned off.",
+    "notMobile": "This phone number is not a mobile number.",
+    "send": "Send SMS",
+    "smsSent": "Sent",
+    "smsQueued": "Sending…",
+    "smsRetrying": "Retrying…",
+    "smsFailed": "Failed",
+    "retry": "Retry"
   }
 }

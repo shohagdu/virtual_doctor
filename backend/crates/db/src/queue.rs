@@ -25,6 +25,21 @@ struct Row {
     queue_serial: Option<u32>,
     doctor_id: Option<u64>,
     created_at: NaiveDateTime,
+    #[sqlx(flatten)]
+    patient: PatientRow,
+    has_allergy: bool,
+    has_vitals: bool,
+    bill_status: Option<String>,
+}
+
+/// Patient columns shown in lists (queue, appointments, follow-ups); select with
+/// `PATIENT_COLUMNS` on a `patients p` join.
+pub(crate) const PATIENT_COLUMNS: &str =
+    "p.id AS patient_id, p.patient_code, p.title, p.name_en, p.name_bn, p.phone, p.dob, p.sex";
+
+#[derive(sqlx::FromRow)]
+pub(crate) struct PatientRow {
+    patient_id: u64,
     patient_code: String,
     title: Option<String>,
     name_en: String,
@@ -32,26 +47,40 @@ struct Row {
     phone: String,
     dob: NaiveDate,
     sex: String,
-    has_allergy: bool,
-    has_vitals: bool,
+}
+
+impl From<PatientRow> for QueuePatient {
+    fn from(r: PatientRow) -> Self {
+        Self {
+            id: r.patient_id,
+            patient_code: r.patient_code,
+            title: r.title,
+            name_en: r.name_en,
+            name_bn: r.name_bn,
+            phone: r.phone,
+            dob: r.dob,
+            sex: Sex::parse(&r.sex).unwrap_or(Sex::O),
+        }
+    }
 }
 
 /// All of today's visits in call order: active ones by queue position, then seen and
 /// cancelled ones.
 pub async fn today(pool: &MySqlPool, clinic_id: u64, day: NaiveDate) -> DbResult<Vec<QueueEntry>> {
-    let rows: Vec<Row> = sqlx::query_as(
+    let rows: Vec<Row> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT v.id, v.patient_id, v.visit_no, v.visit_date, v.visit_type, v.status,
-                v.queue_serial, v.doctor_id, v.created_at,
-                p.patient_code, p.title, p.name_en, p.name_bn, p.phone, p.dob, p.sex,
+                v.queue_serial, v.doctor_id, v.created_at, {PATIENT_COLUMNS},
                 COALESCE(JSON_LENGTH(m.allergies), 0) > 0 AS has_allergy,
-                EXISTS (SELECT 1 FROM vitals vt WHERE vt.visit_id = v.id) AS has_vitals
+                EXISTS (SELECT 1 FROM vitals vt WHERE vt.visit_id = v.id) AS has_vitals,
+                b.status AS bill_status
          FROM visits v
          JOIN patients p ON p.id = v.patient_id
          LEFT JOIN patient_medical_profile m ON m.patient_id = v.patient_id
+         LEFT JOIN bills b ON b.visit_id = v.id
          WHERE v.clinic_id = ? AND v.visit_date = ? AND v.deleted_at IS NULL
          ORDER BY FIELD(v.status, 'in_consultation', 'waiting', 'seen', 'cancelled'),
-                  v.queue_position, v.id",
-    )
+                  v.queue_position, v.id"
+    )))
     .bind(clinic_id)
     .bind(day)
     .fetch_all(pool)
@@ -71,18 +100,10 @@ pub async fn today(pool: &MySqlPool, clinic_id: u64, day: NaiveDate) -> DbResult
                 doctor_id: r.doctor_id,
                 created_at: r.created_at.and_utc(),
             },
-            patient: QueuePatient {
-                id: r.patient_id,
-                patient_code: r.patient_code,
-                title: r.title,
-                name_en: r.name_en,
-                name_bn: r.name_bn,
-                phone: r.phone,
-                dob: r.dob,
-                sex: Sex::parse(&r.sex).unwrap_or(Sex::O),
-            },
+            patient: r.patient.into(),
             has_allergy: r.has_allergy,
             has_vitals: r.has_vitals,
+            bill_status: r.bill_status,
         })
         .collect())
 }

@@ -27,8 +27,19 @@ function toForm(p: Patient): PatientForm {
   }
 }
 
-/** Registers a new patient, or edits one when `patient` is given. */
-export function PatientFormDialog({ patient, onClose }: { patient?: Patient; onClose: () => void }) {
+/**
+ * Registers a new patient, or edits one when `patient` is given. After registering it
+ * opens the new profile, unless `onCreated` takes the patient (e.g. to book them in).
+ */
+export function PatientFormDialog({
+  patient,
+  onClose,
+  onCreated,
+}: {
+  patient?: Patient
+  onClose: () => void
+  onCreated?: (p: Patient) => void
+}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const create = useCreatePatient()
@@ -54,7 +65,8 @@ export function PatientFormDialog({ patient, onClose }: { patient?: Patient; onC
       const res = await create.mutateAsync({ form, force })
       if (res.patient) {
         onClose()
-        navigate(`/patients/${res.patient.id}`)
+        if (onCreated) onCreated(res.patient)
+        else navigate(`/patients/${res.patient.id}`)
       } else {
         setDuplicates(res.duplicates)
       }
@@ -142,7 +154,8 @@ export function PatientFormDialog({ patient, onClose }: { patient?: Patient; onC
                     className="text-brand underline"
                     onClick={() => {
                       onClose()
-                      navigate(`/patients/${p.id}`)
+                      if (onCreated) onCreated(p)
+                      else navigate(`/patients/${p.id}`)
                     }}
                   >
                     {p.patient_code} — {p.name_en} ({ageText(p.dob)} / {p.sex}) {p.phone}

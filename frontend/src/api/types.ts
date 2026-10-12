@@ -106,19 +106,23 @@ export interface VitalsRecord extends Vitals {
   recorded_at: string
 }
 
+/** The patient fields shown in lists (queue, appointments, follow-ups). */
+export interface PatientBrief {
+  id: number
+  patient_code: string
+  title: string | null
+  name_en: string
+  name_bn: string | null
+  phone: string
+  dob: string
+  sex: Sex
+}
+
 export interface QueueEntry extends Visit {
-  patient: {
-    id: number
-    patient_code: string
-    title: string | null
-    name_en: string
-    name_bn: string | null
-    phone: string
-    dob: string
-    sex: Sex
-  }
+  patient: PatientBrief
   has_allergy: boolean
   has_vitals: boolean
+  bill_status: BillStatus | null
 }
 
 export interface QueueToday {
@@ -186,4 +190,150 @@ export interface Me {
     bmdc_reg_no: string | null
   }
   clinic: { name: string; address: string | null; phone: string | null }
+}
+
+// ---- Phase 3: settings, appointments, follow-ups, billing ----
+
+export type Lang = 'en' | 'bn'
+
+export interface ChamberSession {
+  /** 0 = Sunday … 6 = Saturday */
+  weekday: number
+  start: string
+  end: string
+}
+
+export interface SmsTemplate {
+  en: string
+  bn: string
+}
+
+export interface ClinicSettings {
+  fees: Record<VisitType, number>
+  schedule: ChamberSession[]
+  slot_minutes: number
+  daily_limit: number | null
+  sms: {
+    enabled: boolean
+    language: Lang
+    confirm_on_book: boolean
+    remind_day_before: boolean
+    templates: {
+      appointment_confirm: SmsTemplate
+      appointment_reminder: SmsTemplate
+      followup_reminder: SmsTemplate
+    }
+  }
+}
+
+export type AppointmentStatus = 'booked' | 'arrived' | 'seen' | 'no_show' | 'cancelled'
+
+export interface Appointment {
+  id: number
+  start_at: string
+  /** Clinic-local date (YYYY-MM-DD) and time (HH:MM). */
+  date: string
+  time: string
+  visit_type: VisitType
+  status: AppointmentStatus
+  notes: string | null
+  visit_id: number | null
+  sms_sent_at: string | null
+  patient: PatientBrief
+}
+
+export interface DaySlots {
+  date: string
+  free_time: boolean
+  slots: { time: string; taken: boolean; past: boolean }[]
+  booked: number
+  daily_limit: number | null
+}
+
+export type FollowupBucket = 'today' | 'overdue' | 'week' | 'done'
+export type FollowupStatus = 'pending' | 'came' | 'missed'
+
+export interface Followup {
+  id: number
+  due_date: string
+  status: FollowupStatus
+  reminder_sent_at: string | null
+  visit_id: number | null
+  visit_date: string | null
+  /** null for roles without clinical access */
+  diagnosis: string[] | null
+  chronic_conditions: string[]
+  patient: PatientBrief
+  last_sms: { id: number; status: 'queued' | 'sent' | 'failed'; error: string | null; created_at: string } | null
+}
+
+export interface FollowupList {
+  counts: { today: number; overdue: number; week: number }
+  items: Followup[]
+}
+
+export interface SmsDraft {
+  body: string
+  segments: number
+  enabled: boolean
+  phone_ok: boolean
+}
+
+export type PaymentMethod = 'cash' | 'bkash' | 'nagad' | 'card'
+export type BillStatus = 'paid' | 'due'
+
+export interface Bill {
+  id: number
+  visit_id: number
+  receipt_no: string
+  fee: number
+  discount: number
+  discount_reason: string | null
+  total: number
+  paid: number
+  due: number
+  method: PaymentMethod
+  status: BillStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface BillInput {
+  fee: number
+  discount: number
+  discount_reason: string | null
+  paid: number
+  method: PaymentMethod
+}
+
+export interface CollectionRow {
+  bill_id: number
+  visit_id: number
+  visit_date: string
+  receipt_no: string
+  patient_id: number
+  patient_code: string
+  patient_name: string
+  visit_type: VisitType
+  fee: number
+  discount: number
+  total: number
+  paid: number
+  due: number
+  method: PaymentMethod
+}
+
+export interface Collection {
+  from: string
+  to: string
+  totals: {
+    count: number
+    fee: number
+    discount: number
+    total: number
+    paid: number
+    due: number
+    by_method: { method: PaymentMethod; paid: number; count: number }[]
+  }
+  rows: CollectionRow[]
 }

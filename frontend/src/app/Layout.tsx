@@ -1,12 +1,14 @@
 import { NavLink, Outlet } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import type { Role } from '../api/types'
 import { useAuth } from '../features/auth/authStore'
 
-const links = [
+const links: { to: string; key: string; roles?: Role[] }[] = [
   { to: '/dashboard', key: 'nav.dashboard' },
   { to: '/patients', key: 'nav.patients' },
   { to: '/appointments', key: 'nav.appointments' },
   { to: '/followups', key: 'nav.followups' },
+  { to: '/collection', key: 'nav.collection', roles: ['doctor', 'admin'] },
   { to: '/settings', key: 'nav.settings' },
 ]
 
@@ -22,7 +24,7 @@ export function Layout() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3">
           <span className="text-lg font-semibold text-brand">{t('app.name')}</span>
           <nav className="flex flex-wrap gap-1">
-            {links.map((l) => (
+            {links.filter((l) => !l.roles || (user && l.roles.includes(user.role))).map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}

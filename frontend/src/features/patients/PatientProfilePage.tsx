@@ -7,6 +7,8 @@ import { PatientInfoBar } from '../../components/PatientInfoBar'
 import { todayIso } from '../../utils/date'
 import { useAuth } from '../auth/authStore'
 import { VitalsTab } from '../vitals/VitalsTab'
+import { usePatientAppointments } from '../appointments/api'
+import { fmtDate } from '../../utils/date'
 import { useMedicalProfile, usePatient, useStartVisit, useVisits } from './api'
 import { MedicalProfilePanel } from './MedicalProfilePanel'
 import { PatientFormDialog } from './PatientFormDialog'
@@ -22,6 +24,8 @@ export function PatientProfilePage() {
   const profile = useMedicalProfile(id, clinicalAccess)
   const visits = useVisits(id, clinicalAccess)
   const startVisit = useStartVisit(id)
+  const appointments = usePatientAppointments(id)
+  const upcoming = appointments.data?.filter((a) => a.status === 'booked') ?? []
   const [editing, setEditing] = useState(false)
   const [tab, setTab] = useState<'visits' | 'vitals'>('visits')
 
@@ -50,6 +54,12 @@ export function PatientProfilePage() {
           <button onClick={() => setEditing(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
             ✏ {t('profile.edit')}
           </button>
+          <button
+            onClick={() => navigate(`/appointments?book=${id}`)}
+            className="rounded border border-brand bg-white px-3 py-1.5 text-sm text-brand"
+          >
+            📅 {t('appointments.book')}
+          </button>
           {role === 'doctor' ? (
             <button
               onClick={newRx}
@@ -72,6 +82,23 @@ export function PatientProfilePage() {
       {startVisit.isError && <p className="text-sm text-red-600">{startVisit.error.message}</p>}
 
       <PatientInfoBar patient={p} allergies={profile.data?.allergies ?? []} />
+
+      {upcoming.length > 0 && (
+        <p className="rounded bg-blue-50 px-3 py-2 text-sm text-blue-900">
+          📅 {t('appointments.upcoming')}:{' '}
+          {upcoming.map((a, i) => (
+            <span key={a.id}>
+              {i > 0 && ', '}
+              <button
+                onClick={() => navigate(`/appointments?view=day&date=${a.date}`)}
+                className="font-medium underline"
+              >
+                {fmtDate(a.date)} {a.time}
+              </button>
+            </span>
+          ))}
+        </p>
+      )}
 
       {clinicalAccess ? (
         <div className="grid gap-4 md:grid-cols-[280px_1fr]">

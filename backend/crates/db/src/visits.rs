@@ -109,6 +109,7 @@ pub async fn create(
     .execute(&mut *tx)
     .await?;
     tx.commit().await?;
+    crate::followups::mark_came_on_visit(pool, clinic_id, patient_id, today).await?;
 
     get(pool, clinic_id, res.last_insert_id()).await
 }

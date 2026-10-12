@@ -5,6 +5,7 @@ import { api } from '../../api/client'
 import { useMe } from '../../api/me'
 import type { Me } from '../../api/types'
 import { Card } from '../../components/Card'
+import { ClinicSettingsForm } from './ClinicSettingsForm'
 
 const input = 'mt-1 w-full rounded border px-3 py-2'
 
@@ -17,6 +18,7 @@ export function SettingsPage() {
     <div className="grid gap-4 md:grid-cols-2">
       <ProfileForm me={me} />
       {me.user.role !== 'assistant' && <ClinicForm me={me} />}
+      {me.user.role !== 'assistant' && <ClinicSettingsForm />}
     </div>
   )
 }
