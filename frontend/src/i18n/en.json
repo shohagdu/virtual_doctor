@@ -8,7 +8,8 @@
     "appointments": "Appointments",
     "followups": "Follow-ups",
     "settings": "Settings",
-    "collection": "Collection"
+    "collection": "Collection",
+    "medicines": "Medicines"
   },
   "auth": {
     "login": "Login",
@@ -48,7 +49,35 @@
     "createAnyway": "Create new anyway",
     "save": "Save",
     "cancel": "Cancel",
-    "edit": "Edit Patient"
+    "edit": "Edit Patient",
+    "registeredCount_one": "{{count}} patient registered",
+    "registeredCount_other": "{{count}} patients registered",
+    "searchLong": "Search by name, phone or patient ID…",
+    "clearSearch": "Clear search",
+    "sexFilter": "Filter by sex",
+    "sex": {
+      "all": "All",
+      "M": "Male",
+      "F": "Female",
+      "O": "Other"
+    },
+    "sortBy": "Sort by",
+    "sort": {
+      "newest": "Newest registered",
+      "last_visit": "Recent visit",
+      "name": "Name A–Z"
+    },
+    "lastVisit": "Last visit",
+    "noVisits": "No visits yet",
+    "nVisits_one": "{{count}} visit",
+    "nVisits_other": "{{count}} visits",
+    "showing": "Showing {{from}}–{{to}} of {{total}}",
+    "noMatch": "No patients match",
+    "noneYet": "No patients yet",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago"
   },
   "common": {
     "comingSoon": "Coming soon",
@@ -583,7 +612,7 @@
   },
   "lists": {
     "title": "Prescription lists",
-    "help": "Items offered in each prescription section and in the patient profile's Chronic Conditions. Doctors can still type anything else.",
+    "help": "Items offered in each prescription section, the patient profile's Chronic Conditions and the medicine form's Company. Doctors can still type anything else in the prescription.",
     "add": "Add",
     "addPlaceholder": "Add an item — or paste many, one per line",
     "pasteHint": "Enter adds · Shift+Enter for a new line · pasting a list adds every line",
@@ -596,5 +625,45 @@
     "allAdded": "All items in the list are already added.",
     "typeToAdd": "Type and press Enter to add.",
     "done": "Done"
+  },
+  "medicines": {
+    "title": "Medicines",
+    "subtitle": "{{own}} in your list · {{shared}} shared — used for ℞ suggestions and the allergy check",
+    "add": "Add medicine",
+    "edit": "Edit medicine",
+    "brand": "Brand",
+    "generic": "Generic",
+    "strength": "Strength",
+    "form": "Form",
+    "company": "Company",
+    "price": "Price",
+    "used": "Used",
+    "statusCol": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "shared": "Shared",
+    "search": "Search brand, generic or company…",
+    "allForms": "All forms",
+    "status": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "count_one": "{{count}} medicine",
+    "count_other": "{{count}} medicines",
+    "empty": "No medicines yet",
+    "noMatch": "No medicines match",
+    "emptyHint": "Add medicines one by one, or import your list as CSV (brand, generic, strength, form, company, price). Generic names make the allergy check stronger.",
+    "template": "Template",
+    "export": "Export",
+    "deactivate": "Deactivate (stop suggesting)",
+    "activate": "Activate",
+    "delete": "Delete",
+    "confirmDelete": "Delete?",
+    "usedCannotDelete": "Used in prescriptions — deactivate instead",
+    "genericHint": "The generic name lets the allergy check catch this brand. Inactive medicines are not suggested but stay on old prescriptions.",
+    "companies": "Companies",
+    "allCompanies": "All companies",
+    "manageCompanies": "Manage list"
   }
 }

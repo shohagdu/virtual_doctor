@@ -36,6 +36,8 @@ pub struct RxLists {
     pub next_plan: Vec<String>,
     /// Offered for the patient profile's Chronic Conditions.
     pub chronic_conditions: Vec<String>,
+    /// Pharmaceutical companies offered in the medicine form (Medicines page).
+    pub companies: Vec<String>,
 }
 
 fn owned(items: &[&str]) -> Vec<String> {
@@ -164,6 +166,28 @@ impl Default for RxLists {
                 "Osteoarthritis",
                 "Chronic liver disease",
                 "Stroke",
+            ]),
+            companies: owned(&[
+                "Square Pharmaceuticals",
+                "Beximco Pharmaceuticals",
+                "Incepta Pharmaceuticals",
+                "Renata",
+                "ACI",
+                "Eskayef Pharmaceuticals",
+                "Opsonin Pharma",
+                "Healthcare Pharmaceuticals",
+                "The ACME Laboratories",
+                "Aristopharma",
+                "Drug International",
+                "Popular Pharmaceuticals",
+                "General Pharmaceuticals",
+                "Radiant Pharmaceuticals",
+                "Novo Healthcare",
+                "Beacon Pharmaceuticals",
+                "Ziska Pharmaceuticals",
+                "Navana Pharmaceuticals",
+                "Orion Pharma",
+                "Globe Pharmaceuticals",
             ]),
         }
     }
@@ -391,6 +415,7 @@ impl ClinicSettings {
             ("advice", &mut l.advice),
             ("next plan", &mut l.next_plan),
             ("chronic conditions", &mut l.chronic_conditions),
+            ("companies", &mut l.companies),
         ] {
             *items = list(
                 std::mem::take(items),

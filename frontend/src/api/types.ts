@@ -29,6 +29,15 @@ export interface Patient {
   created_at: string
 }
 
+/** A patient-list row: the patient plus a little history. */
+export interface PatientListItem extends Patient {
+  visit_count: number
+  last_visit: string | null
+  has_allergy: boolean
+}
+
+export type PatientSort = 'newest' | 'name' | 'last_visit'
+
 export interface Page<T> {
   items: T[]
   total: number
@@ -208,7 +217,7 @@ export interface SmsTemplate {
   bn: string
 }
 
-export type RxListKey = 'complaints' | 'examination' | 'investigations' | 'diagnosis' | 'advice' | 'next_plan' | 'chronic_conditions'
+export type RxListKey = 'complaints' | 'examination' | 'investigations' | 'diagnosis' | 'advice' | 'next_plan' | 'chronic_conditions' | 'companies'
 
 export interface ClinicSettings {
   rx_lists: Record<RxListKey, string[]>
@@ -518,4 +527,28 @@ export interface MergeSide {
   patient: Patient
   counts: { visits: number; reports: number; appointments: number; bills: number }
   visits: VisitSummary[]
+}
+
+export interface Medicine {
+  id: number
+  brand: string
+  generic: string
+  strength: string | null
+  form: string | null
+  company: string | null
+  price: number | null
+  is_active: boolean
+  /** Shared catalogue row: read-only for the clinic. */
+  shared: boolean
+  /** Prescription lines using it; used medicines can only be deactivated. */
+  used: number
+}
+
+export interface MedicineInput {
+  brand: string
+  generic: string
+  strength: string | null
+  form: string | null
+  company: string | null
+  price: number | null
 }

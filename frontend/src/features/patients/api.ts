@@ -1,12 +1,30 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../api/client'
-import type { CreatePatientResponse, MedicalProfile, Page, Patient, Visit, VisitSummary, VisitType } from '../../api/types'
+import type {
+  CreatePatientResponse,
+  MedicalProfile,
+  Page,
+  Patient,
+  PatientListItem,
+  PatientSort,
+  Visit,
+  VisitSummary,
+  VisitType,
+} from '../../api/types'
 import type { PatientForm } from './schema'
 
-export function usePatients(q: string, page: number, enabled = true) {
+export function usePatients(
+  q: string,
+  page: number,
+  enabled = true,
+  opts: { sex?: string; sort?: PatientSort; perPage?: number } = {},
+) {
+  const qs = new URLSearchParams({ q, page: String(page), per_page: String(opts.perPage ?? 20) })
+  if (opts.sex) qs.set('sex', opts.sex)
+  if (opts.sort) qs.set('sort', opts.sort)
   return useQuery({
-    queryKey: ['patients', q, page],
-    queryFn: () => api<Page<Patient>>(`/patients?q=${encodeURIComponent(q)}&page=${page}`),
+    queryKey: ['patients', q, page, opts.sex ?? '', opts.sort ?? '', opts.perPage ?? 20],
+    queryFn: () => api<Page<PatientListItem>>(`/patients?${qs}`),
     placeholderData: keepPreviousData,
     enabled,
   })

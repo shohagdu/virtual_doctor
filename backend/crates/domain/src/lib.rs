@@ -8,6 +8,7 @@ pub mod document;
 pub mod followup;
 pub mod lab;
 pub mod medical_profile;
+pub mod medicine;
 pub mod patient;
 pub mod prescription;
 pub mod report;

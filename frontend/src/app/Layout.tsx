@@ -12,6 +12,7 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Pill,
   Search,
   Settings,
   Stethoscope,
@@ -33,6 +34,7 @@ const links: { to: string; key: string; icon: Icon; roles?: Role[]; badge?: 'wai
   { to: '/patients', key: 'nav.patients', icon: Users },
   { to: '/appointments', key: 'nav.appointments', icon: CalendarDays },
   { to: '/followups', key: 'nav.followups', icon: BellRing, badge: 'followups' },
+  { to: '/medicines', key: 'nav.medicines', icon: Pill, roles: ['doctor', 'admin'] },
   { to: '/collection', key: 'nav.collection', icon: Wallet, roles: ['doctor', 'admin'] },
   { to: '/settings', key: 'nav.settings', icon: Settings },
 ]

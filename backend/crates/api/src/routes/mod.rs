@@ -105,6 +105,14 @@ pub fn router(state: AppState) -> Router {
         .route("/medicines/search", get(medicines::search))
         .route("/medicines/catalogue", get(medicines::catalogue))
         .route("/medicines/import", post(medicines::import))
+        .route("/medicines", get(medicines::list).post(medicines::create))
+        .route("/medicines/export", get(medicines::export))
+        .route(
+            "/medicines/{id}",
+            put(medicines::update)
+                .patch(medicines::set_active)
+                .delete(medicines::delete),
+        )
         .route("/rx-templates", get(templates::list).post(templates::save))
         .route("/rx-templates/{id}", delete(templates::delete))
         .route(

@@ -216,3 +216,25 @@ mod tests {
         assert_eq!(patient_code(2026, 123), "P-2026-000123");
     }
 }
+
+/// A row of the patient list: the patient plus a little history (Patients page).
+#[derive(Clone, Debug, Serialize)]
+pub struct PatientListItem {
+    #[serde(flatten)]
+    pub patient: Patient,
+    pub visit_count: i64,
+    pub last_visit: Option<NaiveDate>,
+    pub has_allergy: bool,
+}
+
+/// Patient list order.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PatientSort {
+    /// Newest registered first.
+    #[default]
+    Newest,
+    Name,
+    /// Most recently seen first; never seen last.
+    LastVisit,
+}

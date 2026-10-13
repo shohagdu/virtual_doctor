@@ -15,6 +15,9 @@ use crate::state::AppState;
 pub struct ListQuery {
     #[serde(default)]
     q: String,
+    sex: Option<String>,
+    #[serde(default)]
+    sort: vd_domain::patient::PatientSort,
     page: Option<u32>,
     per_page: Option<u32>,
 }
@@ -31,10 +34,17 @@ pub async fn list(
     State(state): State<AppState>,
     user: AuthUser,
     Query(q): Query<ListQuery>,
-) -> AppResult<Json<Page<Patient>>> {
+) -> AppResult<Json<Page<vd_domain::patient::PatientListItem>>> {
     let page = q.page.unwrap_or(1).max(1);
     let per_page = q.per_page.unwrap_or(20).clamp(1, 100);
-    let (items, total) = vd_db::patients::search(&state.pool, user.clinic_id, &q.q, page, per_page)
+    let filter = vd_db::patients::SearchFilter {
+        q: &q.q,
+        sex: q.sex.as_deref().and_then(vd_domain::patient::Sex::parse),
+        sort: q.sort,
+        page,
+        per_page,
+    };
+    let (items, total) = vd_db::patients::search(&state.pool, user.clinic_id, &filter)
         .await
         .map_err(AppError::internal)?;
     Ok(Json(Page {

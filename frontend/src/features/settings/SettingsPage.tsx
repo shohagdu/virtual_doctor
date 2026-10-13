@@ -5,7 +5,6 @@ import { api } from '../../api/client'
 import { useMe } from '../../api/me'
 import type { Me } from '../../api/types'
 import { Card } from '../../components/Card'
-import { CatalogueCard } from './CatalogueCard'
 import { ClinicSettingsForm } from './ClinicSettingsForm'
 
 const input = 'mt-1 w-full rounded-md border px-3 py-2'
@@ -20,7 +19,6 @@ export function SettingsPage() {
       <ProfileForm me={me} />
       {me.user.role !== 'assistant' && <ClinicForm me={me} />}
       {me.user.role !== 'assistant' && <ClinicSettingsForm />}
-      {me.user.role !== 'assistant' && <CatalogueCard />}
     </div>
   )
 }

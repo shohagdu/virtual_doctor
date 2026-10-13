@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ListChecks, Plus, Search, X } from 'lucide-react'
 import type { ClinicSettings, RxListKey } from '../../api/types'
@@ -12,6 +13,7 @@ const KEYS: { key: RxListKey; label: string }[] = [
   { key: 'advice', label: 'rx.advice' },
   { key: 'next_plan', label: 'rx.nextPlan' },
   { key: 'chronic_conditions', label: 'profile.chronic' },
+  { key: 'companies', label: 'medicines.companies' },
 ]
 
 /**
@@ -26,7 +28,14 @@ export function RxListsCard({
   onChange: (v: ClinicSettings['rx_lists']) => void
 }) {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<RxListKey>('complaints')
+  // /settings#companies (or any list key) opens that tab and scrolls here.
+  const { hash } = useLocation()
+  const linked = KEYS.find((k) => `#${k.key}` === hash)?.key
+  const [tab, setTab] = useState<RxListKey>(linked ?? 'complaints')
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (linked) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [linked])
   const [text, setText] = useState('')
   const [filter, setFilter] = useState('')
   const items = value[tab]
@@ -44,6 +53,7 @@ export function RxListsCard({
   const remove = (x: string) => onChange({ ...value, [tab]: items.filter((y) => y !== x) })
 
   return (
+    <div ref={ref} className="scroll-mt-20">
     <Card
       title={
         <span className="flex items-center gap-2">
@@ -124,5 +134,6 @@ export function RxListsCard({
       </ul>
       <p className="mt-3 text-xs text-slate-500">{t('lists.saveHint')}</p>
     </Card>
+    </div>
   )
 }

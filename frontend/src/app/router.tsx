@@ -9,6 +9,7 @@ import { AppointmentsPage } from '../features/appointments/AppointmentsPage'
 import { FollowupsPage } from '../features/followups/FollowupsPage'
 import { CollectionPage } from '../features/billing/CollectionPage'
 import { AiUsagePage } from '../features/ai/AiUsagePage'
+import { MedicinesPage } from '../features/medicines/MedicinesPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { Layout } from './Layout'
 
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: '/followups', element: <FollowupsPage /> },
       { path: '/collection', element: <CollectionPage /> },
       { path: '/ai-usage', element: <AiUsagePage /> },
+      { path: '/medicines', element: <MedicinesPage /> },
       { path: '/settings', element: <SettingsPage /> },
     ],
   },

@@ -173,24 +173,48 @@ pub async fn update(
     get(pool, clinic_id, id).await
 }
 
-/// Search by name (English/Bangla), phone prefix, or patient code. Newest first.
+pub struct SearchFilter<'a> {
+    pub q: &'a str,
+    pub sex: Option<Sex>,
+    pub sort: vd_domain::patient::PatientSort,
+    pub page: u32,
+    pub per_page: u32,
+}
+
+#[derive(sqlx::FromRow)]
+struct ListRow {
+    #[sqlx(flatten)]
+    patient: PatientRow,
+    visit_count: i64,
+    last_visit: Option<NaiveDate>,
+    has_allergy: bool,
+}
+
+/// Search by name (English/Bangla), phone prefix, or patient code, with each
+/// patient's visit count, last visit and whether allergies are recorded.
 pub async fn search(
     pool: &MySqlPool,
     clinic_id: u64,
-    q: &str,
-    page: u32,
-    per_page: u32,
-) -> DbResult<(Vec<Patient>, i64)> {
-    let q = q.trim();
-    let offset = page.saturating_sub(1) as u64 * per_page as u64;
-    let filter = "clinic_id = ? AND deleted_at IS NULL AND (? = '' OR patient_code = ? \
-                  OR phone LIKE CONCAT(?, '%') OR name_en LIKE CONCAT('%', ?, '%') \
-                  OR name_bn LIKE CONCAT('%', ?, '%'))";
+    f: &SearchFilter<'_>,
+) -> DbResult<(Vec<vd_domain::patient::PatientListItem>, i64)> {
+    use vd_domain::patient::PatientSort;
+    let q = f.q.trim();
+    let sex = f.sex.map(|s| match s {
+        Sex::M => "M",
+        Sex::F => "F",
+        Sex::O => "O",
+    });
+    let offset = f.page.saturating_sub(1) as u64 * f.per_page as u64;
+    let filter = "p.clinic_id = ? AND p.deleted_at IS NULL AND (? IS NULL OR p.sex = ?) \
+                  AND (? = '' OR p.patient_code = ? OR p.phone LIKE CONCAT(?, '%') \
+                  OR p.name_en LIKE CONCAT('%', ?, '%') OR p.name_bn LIKE CONCAT('%', ?, '%'))";
 
     let total: i64 = sqlx::query_scalar(AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM patients WHERE {filter}"
+        "SELECT COUNT(*) FROM patients p WHERE {filter}"
     )))
     .bind(clinic_id)
+    .bind(sex)
+    .bind(sex)
     .bind(q)
     .bind(q)
     .bind(q)
@@ -199,21 +223,52 @@ pub async fn search(
     .fetch_one(pool)
     .await?;
 
-    let rows: Vec<PatientRow> = sqlx::query_as(AssertSqlSafe(format!(
-        "SELECT {COLUMNS} FROM patients WHERE {filter} ORDER BY id DESC LIMIT ? OFFSET ?"
+    let columns = COLUMNS
+        .split(", ")
+        .map(|c| format!("p.{}", c.trim()))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let order = match f.sort {
+        PatientSort::Newest => "p.id DESC",
+        PatientSort::Name => "p.name_en, p.id",
+        PatientSort::LastVisit => "last_visit IS NULL, last_visit DESC, p.id DESC",
+    };
+    let rows: Vec<ListRow> = sqlx::query_as(AssertSqlSafe(format!(
+        "SELECT {columns},
+                CAST(COALESCE(v.n, 0) AS SIGNED) AS visit_count, v.last_visit,
+                COALESCE(JSON_LENGTH(m.allergies), 0) > 0 AS has_allergy
+         FROM patients p
+         LEFT JOIN (SELECT patient_id, COUNT(*) AS n, MAX(visit_date) AS last_visit
+                    FROM visits WHERE deleted_at IS NULL AND status <> 'cancelled'
+                    GROUP BY patient_id) v ON v.patient_id = p.id
+         LEFT JOIN patient_medical_profile m ON m.patient_id = p.id
+         WHERE {filter}
+         ORDER BY {order} LIMIT ? OFFSET ?"
     )))
     .bind(clinic_id)
+    .bind(sex)
+    .bind(sex)
     .bind(q)
     .bind(q)
     .bind(q)
     .bind(q)
     .bind(q)
-    .bind(per_page)
+    .bind(f.per_page)
     .bind(offset)
     .fetch_all(pool)
     .await?;
 
-    Ok((rows.into_iter().map(Into::into).collect(), total))
+    Ok((
+        rows.into_iter()
+            .map(|r| vd_domain::patient::PatientListItem {
+                patient: r.patient.into(),
+                visit_count: r.visit_count,
+                last_visit: r.last_visit,
+                has_allergy: r.has_allergy,
+            })
+            .collect(),
+        total,
+    ))
 }
 
 /// LIKE pattern matching `term` anywhere, with LIKE's wildcards escaped.
