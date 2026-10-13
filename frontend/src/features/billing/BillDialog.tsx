@@ -68,8 +68,8 @@ function BillForm({
   const current = saved ?? bill
 
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-4 print:hidden">
-      <form onSubmit={(e) => submit(e, false)} className="w-full max-w-md space-y-4 rounded-lg bg-white p-6 shadow-lg">
+    <div className="overlay print:hidden">
+      <form onSubmit={(e) => submit(e, false)} className="w-full max-w-md space-y-4 dialog">
         <div>
           <h2 className="text-lg font-semibold">💳 {t('billing.title')}</h2>
           <p className="text-sm text-slate-500">
@@ -86,7 +86,7 @@ function BillForm({
             step="any"
             value={fee}
             onChange={(e) => setFee(e.target.value)}
-            className="mt-1 w-full rounded border px-3 py-2"
+            className="mt-1 w-full rounded-md border px-3 py-2"
             required
           />
         </label>
@@ -94,7 +94,7 @@ function BillForm({
         <div className="text-sm">
           <div className="flex items-center gap-2">
             {t('billing.discount')}
-            <span className="ml-auto flex overflow-hidden rounded border text-xs">
+            <span className="ml-auto flex overflow-hidden rounded-md border text-xs">
               {(['amount', 'percent'] as const).map((m) => (
                 <button
                   key={m}
@@ -115,7 +115,7 @@ function BillForm({
             value={discountText}
             onChange={(e) => setDiscountText(e.target.value)}
             placeholder="0"
-            className="mt-1 w-full rounded border px-3 py-2"
+            className="mt-1 w-full rounded-md border px-3 py-2"
           />
           {discount > 0 && (
             <input
@@ -124,7 +124,7 @@ function BillForm({
               placeholder={t('billing.discountReason')}
               maxLength={150}
               required
-              className="mt-2 w-full rounded border px-3 py-2"
+              className="mt-2 w-full rounded-md border px-3 py-2"
             />
           )}
         </div>
@@ -138,7 +138,7 @@ function BillForm({
             value={paidText}
             onChange={(e) => setPaidText(e.target.value)}
             placeholder={String(total)}
-            className="mt-1 w-full rounded border px-3 py-2"
+            className="mt-1 w-full rounded-md border px-3 py-2"
           />
         </label>
 
@@ -148,7 +148,7 @@ function BillForm({
             {METHODS.map((m) => (
               <label
                 key={m}
-                className={`cursor-pointer rounded border px-2 py-1.5 text-center ${method === m ? 'border-brand bg-blue-50 text-brand' : ''}`}
+                className={`cursor-pointer rounded-md border px-2 py-1.5 text-center ${method === m ? 'border-brand bg-blue-50 text-brand' : ''}`}
               >
                 <input
                   type="radio"
@@ -164,7 +164,7 @@ function BillForm({
           </div>
         </fieldset>
 
-        <dl className="grid grid-cols-2 gap-y-1 rounded bg-panel p-3 text-sm">
+        <dl className="grid grid-cols-2 gap-y-1 rounded-md bg-panel p-3 text-sm">
           <dt>{t('billing.payable')}</dt>
           <dd className="text-right font-semibold">{taka(total)}</dd>
           <dt>{t('billing.due')}</dt>
@@ -180,24 +180,24 @@ function BillForm({
           <select
             value={printLang}
             onChange={(e) => setPrintLang(e.target.value as 'en' | 'bn')}
-            className="mr-auto rounded border bg-white px-2 py-2 text-sm"
+            className="mr-auto rounded-md border bg-white px-2 py-2 text-sm"
             aria-label={t('billing.receiptLanguage')}
           >
             <option value="en">Receipt: English</option>
             <option value="bn">রসিদ: বাংলা</option>
           </select>
-          <button type="button" onClick={onClose} className="rounded border px-4 py-2">
+          <button type="button" onClick={onClose} className="btn btn-secondary">
             {t('common.close')}
           </button>
           <button
             type="button"
             onClick={(e) => submit(e, true)}
             disabled={save.isPending}
-            className="rounded border border-brand px-4 py-2 text-brand disabled:opacity-60"
+            className="rounded-md border border-brand px-4 py-2 text-brand disabled:opacity-60"
           >
             🖨 {t('billing.saveAndPrint')}
           </button>
-          <button disabled={save.isPending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60">
+          <button disabled={save.isPending} className="btn btn-primary">
             {t('patients.save')}
           </button>
         </div>

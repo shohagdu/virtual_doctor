@@ -1,12 +1,14 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { fileUrl, streamAi } from '../../api/stream'
-import type { AnalysisView, MedicineLine, Report } from '../../api/types'
+import { streamAi } from '../../api/stream'
+import type { AnalysisView, MedicineLine } from '../../api/types'
 import { useDeleteReport, useExtractReport, useLatestAnalysis, useUploadReport, useVisitReports } from './api'
 import { ExtractedValuesTable } from './ExtractedValuesTable'
 import { FindingsPanel, type Insert } from './FindingsPanel'
 import { compressImage, shortLine } from './lab'
+import { ReportThumb } from './ReportThumb'
+import { ReportViewer } from './ReportViewer'
 
 interface Upload {
   key: number
@@ -93,10 +95,7 @@ export function ReportDrawer({
     }
   }
 
-  const openFile = async (r: Report) => {
-    const url = await fileUrl(`/reports/${r.id}/file`)
-    window.open(url, '_blank', 'noopener')
-  }
+  const [viewing, setViewing] = useState<number | null>(null)
 
   const list = reports.data ?? []
   const readable = list.filter((r) => r.status === 'extracted' || r.status === 'verified')
@@ -104,8 +103,8 @@ export function ReportDrawer({
 
   return (
     <div className="fixed inset-0 z-30 print:hidden" role="dialog" aria-label={t('reports.title')}>
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <aside className="absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col bg-white shadow-xl">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} />
+      <aside className="absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col bg-white shadow-2xl">
         <div className="flex items-center border-b px-4 py-3">
           <h2 className="font-semibold">📄 {t('reports.title')}</h2>
           <button onClick={onClose} className="ml-auto px-2 text-lg" aria-label={t('common.close')}>
@@ -124,10 +123,10 @@ export function ReportDrawer({
           >
             <p className="text-slate-500">{t('reports.dropHere')}</p>
             <div className="mt-2 flex flex-wrap justify-center gap-2">
-              <button onClick={() => fileInput.current?.click()} className="rounded bg-brand px-3 py-1.5 text-white">
+              <button onClick={() => fileInput.current?.click()} className="rounded-md bg-brand px-3 py-1.5 text-white">
                 📎 {t('reports.chooseFiles')}
               </button>
-              <button onClick={() => cameraInput.current?.click()} className="rounded border px-3 py-1.5">
+              <button onClick={() => cameraInput.current?.click()} className="btn btn-secondary btn-sm">
                 📷 {t('reports.camera')}
               </button>
             </div>
@@ -170,27 +169,28 @@ export function ReportDrawer({
                         : `🤖 ${t('reports.reading')}`}
                 </span>
               </div>
-              <div className="mt-1 h-1.5 rounded bg-slate-200">
-                <div className={`h-1.5 rounded ${u.error ? 'bg-red-500' : 'bg-brand'}`} style={{ width: `${u.progress * 100}%` }} />
+              <div className="mt-1 h-1.5 rounded-md bg-slate-200">
+                <div className={`h-1.5 rounded-md ${u.error ? 'bg-red-500' : 'bg-brand'}`} style={{ width: `${u.progress * 100}%` }} />
               </div>
               {u.error && <p className="text-xs text-red-600">{u.error}</p>}
             </div>
           ))}
 
           {list.map((r) => (
-            <section key={r.id} className="space-y-2 rounded border p-3">
+            <section key={r.id} className="space-y-2 rounded-md border p-3">
               <div className="flex flex-wrap items-center gap-2 text-sm">
+                <ReportThumb r={r} onClick={() => setViewing(list.indexOf(r))} />
                 <b>{r.report_type ?? r.original_name ?? t('reports.untitled')}</b>
-                <span className="rounded bg-slate-100 px-1.5 text-xs">{t(`reports.state.${r.status}`)}</span>
+                <span className="rounded-md bg-slate-100 px-1.5 text-xs">{t(`reports.state.${r.status}`)}</span>
                 <span className="ml-auto flex gap-1">
-                  <button onClick={() => openFile(r)} className="rounded border px-2 py-0.5 text-xs">
-                    {t('reports.viewFile')} ↗
+                  <button onClick={() => setViewing(list.indexOf(r))} className="rounded-md border px-2 py-0.5 text-xs">
+                    {t('reports.view')}
                   </button>
                   {aiAvailable && (r.status === 'uploaded' || r.status === 'failed') && (
                     <button
                       onClick={() => extract.mutate(r.id)}
                       disabled={extract.isPending}
-                      className="rounded border border-brand px-2 py-0.5 text-xs text-brand disabled:opacity-50"
+                      className="rounded-md border border-brand px-2 py-0.5 text-xs text-brand disabled:opacity-50"
                     >
                       🤖 {extract.isPending && extract.variables === r.id ? t('reports.reading') : t('reports.read')}
                     </button>
@@ -223,7 +223,7 @@ export function ReportDrawer({
           {shortLines.length > 0 && (
             <button
               onClick={() => onInsert({ diagnosis: [], investigations: shortLines, advice: [], next_plan: [] })}
-              className="w-full rounded border border-brand px-3 py-1.5 text-sm text-brand"
+              className="w-full rounded-md border border-brand px-3 py-1.5 text-sm text-brand"
             >
               ➕ {t('reports.addToInvestigations')}
             </button>
@@ -236,7 +236,7 @@ export function ReportDrawer({
                 <button
                   onClick={analyse}
                   disabled={analysing !== null}
-                  className="ml-auto rounded bg-brand px-3 py-1 text-sm text-white disabled:opacity-60"
+                  className="ml-auto btn btn-primary btn-sm"
                 >
                   {analysing !== null
                     ? `${t('ai.analysing')}${analysing > 0 ? ` (${analysing})` : ''}`
@@ -252,6 +252,9 @@ export function ReportDrawer({
           {!aiAvailable && <p className="text-xs text-slate-500">{t('ai.off')}</p>}
         </div>
       </aside>
+      {viewing !== null && viewing >= 0 && (
+        <ReportViewer reports={list} index={viewing} onIndex={setViewing} onClose={() => setViewing(null)} showValues />
+      )}
     </div>
   )
 }

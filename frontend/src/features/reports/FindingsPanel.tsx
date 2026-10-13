@@ -153,7 +153,7 @@ export function FindingsPanel({ analysis, onInsert }: { analysis: AnalysisView; 
       )}
 
       {a.conflicts?.length > 0 && (
-        <section className="rounded bg-amber-50 p-2 text-amber-900">
+        <section className="rounded-md bg-amber-50 p-2 text-amber-900">
           <h3 className="font-semibold">⚠ {t('ai.conflicts')}</h3>
           <ul className="ml-4 list-disc">
             {a.conflicts.map((c) => (
@@ -188,13 +188,13 @@ export function FindingsPanel({ analysis, onInsert }: { analysis: AnalysisView; 
                         onChange={(e) => setTexts({ ...texts, [i.key]: e.target.value })}
                         onBlur={() => setEditingKey(null)}
                         autoFocus
-                        className="w-full rounded border px-1.5 py-0.5"
+                        className="w-full rounded-md border px-1.5 py-0.5"
                       />
                     ) : (
                       <span lang={i.lang === 'bn' ? 'bn' : undefined}>{textOf(i)}</span>
                     )}
                     {i.suggestion.likelihood && (
-                      <span className="ml-1 rounded bg-slate-100 px-1 text-xs">{t(`ai.likelihood.${i.suggestion.likelihood}`, i.suggestion.likelihood)}</span>
+                      <span className="ml-1 rounded-md bg-slate-100 px-1 text-xs">{t(`ai.likelihood.${i.suggestion.likelihood}`, i.suggestion.likelihood)}</span>
                     )}
                     {i.suggestion.source_refs.filter(Boolean).length > 0 && (
                       <div className="text-xs text-slate-500">{i.suggestion.source_refs.join('; ')}</div>
@@ -220,9 +220,9 @@ export function FindingsPanel({ analysis, onInsert }: { analysis: AnalysisView; 
                         placeholder={t('ai.rejectReason')}
                         maxLength={255}
                         autoFocus
-                        className="min-w-0 flex-1 rounded border px-1.5 py-0.5 text-xs"
+                        className="min-w-0 flex-1 rounded-md border px-1.5 py-0.5 text-xs"
                       />
-                      <button type="button" onClick={reject} disabled={act.isPending} className="rounded border border-red-600 px-2 text-xs text-red-700">
+                      <button type="button" onClick={reject} disabled={act.isPending} className="rounded-md border border-red-600 px-2 text-xs text-red-700">
                         {t('ai.reject')}
                       </button>
                       <button type="button" onClick={() => setRejecting(null)} className="px-1 text-xs">
@@ -241,7 +241,7 @@ export function FindingsPanel({ analysis, onInsert }: { analysis: AnalysisView; 
         <button
           onClick={addSelected}
           disabled={act.isPending || remaining.every((i) => !picked.has(i.key))}
-          className="w-full rounded bg-brand px-3 py-2 text-white disabled:opacity-50"
+          className="w-full btn btn-primary"
         >
           {t('ai.addSelected')}
         </button>

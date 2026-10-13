@@ -43,7 +43,7 @@ export function VitalsTab({ patientId }: { patientId: string }) {
             role="tab"
             aria-selected={m.id === metric.id}
             onClick={() => setMetricId(m.id)}
-            className={`rounded px-3 py-1 text-sm ${m.id === metric.id ? 'bg-brand text-white' : 'border text-slate-600'}`}
+            className={`rounded-md px-3 py-1 text-sm ${m.id === metric.id ? 'bg-brand text-white' : 'border text-slate-600'}`}
           >
             {m.label}
           </button>

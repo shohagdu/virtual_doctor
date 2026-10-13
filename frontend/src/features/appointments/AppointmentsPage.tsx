@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { addDays, format, parseISO, startOfWeek } from 'date-fns'
 import type { Appointment, AppointmentStatus } from '../../api/types'
+import { CalendarPlus, Plus } from 'lucide-react'
 import { Card } from '../../components/Card'
 import { fmtDate, todayIso } from '../../utils/date'
 import { fullName } from '../../utils/patient'
@@ -32,7 +33,7 @@ const dotClass: Record<AppointmentStatus, string> = {
 function AppointmentBadge({ status }: { status: AppointmentStatus }) {
   const { t } = useTranslation()
   return (
-    <span className={`whitespace-nowrap rounded px-2 text-xs ${statusClass[status]}`}>
+    <span className={`whitespace-nowrap rounded-md px-2 text-xs ${statusClass[status]}`}>
       {status === 'seen' ? '✔ ' : ''}
       {t(`appointments.status.${status}`)}
     </span>
@@ -73,8 +74,8 @@ export function AppointmentsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-lg font-semibold">{t('nav.appointments')}</h1>
-        <div className="flex overflow-hidden rounded border bg-white text-sm" role="tablist">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('nav.appointments')}</h1>
+        <div className="flex overflow-hidden rounded-md border bg-white text-sm" role="tablist">
           {(['day', 'week', 'list'] as const).map((v) => (
             <button
               key={v}
@@ -88,25 +89,25 @@ export function AppointmentsPage() {
           ))}
         </div>
         <div className="flex items-center gap-1 text-sm">
-          <button onClick={() => shift(-step)} className="rounded border bg-white px-2 py-1" aria-label={t('common.prev')}>
+          <button onClick={() => shift(-step)} className="rounded-md border bg-white px-2 py-1" aria-label={t('common.prev')}>
             ◀
           </button>
-          <button onClick={() => go({ date: todayIso() })} className="rounded border bg-white px-2 py-1">
+          <button onClick={() => go({ date: todayIso() })} className="rounded-md border bg-white px-2 py-1">
             {t('billing.today')}
           </button>
-          <button onClick={() => shift(step)} className="rounded border bg-white px-2 py-1" aria-label={t('common.next')}>
+          <button onClick={() => shift(step)} className="rounded-md border bg-white px-2 py-1" aria-label={t('common.next')}>
             ▶
           </button>
           <input
             type="date"
             value={date}
             onChange={(e) => e.target.value && go({ date: e.target.value })}
-            className="rounded border px-2 py-1"
+            className="rounded-md border px-2 py-1"
             aria-label={t('appointments.date')}
           />
         </div>
-        <button onClick={() => setBooking({})} className="ml-auto rounded bg-brand px-3 py-1.5 text-sm text-white">
-          📅 {t('appointments.book')}
+        <button onClick={() => setBooking({})} className="ml-auto btn btn-primary btn-sm">
+          <CalendarPlus className="h-4 w-4" /> {t('appointments.book')}
         </button>
       </div>
 
@@ -182,8 +183,11 @@ function DayView({
                     <AppointmentRow key={a.id} a={a} onMove={onMove} />
                   ))}
                   {free && (
-                    <button onClick={() => onBook(time)} className="rounded border border-dashed px-2 py-1 text-xs text-slate-500 hover:border-brand hover:text-brand">
-                      ➕ {t('appointments.book')}
+                    <button
+                      onClick={() => onBook(time)}
+                      className="inline-flex items-center gap-1 rounded-full border border-dashed border-emerald-300 bg-emerald-50/50 px-2.5 py-0.5 text-xs text-emerald-700 hover:border-solid hover:bg-emerald-50"
+                    >
+                      <Plus className="h-3 w-3" /> {t('appointments.free')}
                     </button>
                   )}
                 </div>

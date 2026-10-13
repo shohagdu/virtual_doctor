@@ -24,7 +24,7 @@ export function FollowupsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-lg font-semibold">{t('nav.followups')}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('nav.followups')}</h1>
         <div className="flex flex-wrap gap-1" role="tablist">
           {BUCKETS.map((b) => {
             const n = b === 'done' ? null : data?.counts[b]
@@ -34,7 +34,7 @@ export function FollowupsPage() {
                 role="tab"
                 aria-selected={bucket === b}
                 onClick={() => setParams({ tab: b }, { replace: true })}
-                className={`rounded px-3 py-1.5 text-sm ${bucket === b ? 'bg-brand text-white' : 'border bg-white text-slate-600'}`}
+                className={`rounded-md px-3 py-1.5 text-sm ${bucket === b ? 'bg-brand text-white' : 'border bg-white text-slate-600'}`}
               >
                 {t(`followups.bucket.${b}`)}
                 {n != null && (
@@ -122,7 +122,7 @@ function Row({ f, today, onSms }: { f: Followup; today: string; onSms: () => voi
         {f.chronic_conditions.length > 0 && (
           <div className="mt-0.5 flex flex-wrap gap-1">
             {f.chronic_conditions.map((c) => (
-              <span key={c} className={`rounded px-1.5 text-xs ${chronicOverdue ? 'bg-red-600 text-white' : 'bg-slate-200'}`}>
+              <span key={c} className={`rounded-md px-1.5 text-xs ${chronicOverdue ? 'bg-red-600 text-white' : 'bg-slate-200'}`}>
                 {c}
               </span>
             ))}
@@ -145,26 +145,26 @@ function Row({ f, today, onSms }: { f: Followup; today: string; onSms: () => voi
         <div className="flex flex-wrap gap-1">
           {pending ? (
             <>
-              <button onClick={onSms} className="rounded border px-2 py-1 text-xs">
+              <button onClick={onSms} className="rounded-md border px-2 py-1 text-xs">
                 💬 SMS
               </button>
               <button
                 onClick={() => navigate(`/appointments?book=${f.patient.id}`)}
-                className="rounded border px-2 py-1 text-xs"
+                className="rounded-md border px-2 py-1 text-xs"
               >
                 📅 {t('appointments.book')}
               </button>
               <button
                 onClick={() => update.mutate({ id: f.id, status: 'came' })}
                 disabled={update.isPending}
-                className="rounded border border-green-600 px-2 py-1 text-xs text-green-700 disabled:opacity-50"
+                className="rounded-md border border-green-600 px-2 py-1 text-xs text-green-700 disabled:opacity-50"
               >
                 ✔ {t('followups.status.came')}
               </button>
               <button
                 onClick={() => update.mutate({ id: f.id, status: 'missed' })}
                 disabled={update.isPending}
-                className="rounded border border-red-600 px-2 py-1 text-xs text-red-700 disabled:opacity-50"
+                className="rounded-md border border-red-600 px-2 py-1 text-xs text-red-700 disabled:opacity-50"
               >
                 ✕ {t('followups.status.missed')}
               </button>
@@ -173,7 +173,7 @@ function Row({ f, today, onSms }: { f: Followup; today: string; onSms: () => voi
             <button
               onClick={() => update.mutate({ id: f.id, status: 'pending' })}
               disabled={update.isPending}
-              className="rounded border px-2 py-1 text-xs"
+              className="rounded-md border px-2 py-1 text-xs"
             >
               ↺ {t('followups.reopen')}
             </button>
@@ -202,7 +202,7 @@ function SmsStatus({ f, onRetry, retrying }: { f: Followup; onRetry: (id: number
     <span className="text-red-700">
       ⚠ {t('followups.smsFailed')}
       {s.error && <span className="block text-slate-500">{s.error}</span>}
-      <button onClick={() => onRetry(s.id)} disabled={retrying} className="mt-0.5 rounded border border-red-600 px-1.5 disabled:opacity-50">
+      <button onClick={() => onRetry(s.id)} disabled={retrying} className="mt-0.5 rounded-md border border-red-600 px-1.5 disabled:opacity-50">
         ↻ {t('followups.retry')}
       </button>
     </span>

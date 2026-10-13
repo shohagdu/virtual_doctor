@@ -22,7 +22,7 @@ function rowsOf(r: Report): Row[] {
   }))
 }
 
-const cell = 'w-full rounded border px-1.5 py-1 text-sm'
+const cell = 'w-full rounded-md border px-1.5 py-1 text-sm'
 
 /**
  * Extracted values, for the doctor to check and correct before analysis (§6.3,
@@ -62,12 +62,12 @@ export function ExtractedValuesTable({ report, startEditing }: { report: Report;
   return (
     <div className="space-y-2 text-sm">
       {critical.length > 0 && (
-        <div className="rounded bg-red-600 px-3 py-2 font-semibold text-white" role="alert">
+        <div className="rounded-md bg-red-600 px-3 py-2 font-semibold text-white" role="alert">
           ⚠ {t('reports.critical')}: {critical.map((c) => `${c.test_name} ${c.value_text} ${c.unit ?? ''}`.trim()).join(', ')}
         </div>
       )}
       {report.name_mismatch && (
-        <p className="rounded bg-amber-50 px-3 py-2 text-amber-800">⚠ {t('reports.nameMismatch')}</p>
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-800">⚠ {t('reports.nameMismatch')}</p>
       )}
       {report.unreadable_parts.length > 0 && (
         <p className="text-xs text-amber-700">
@@ -195,7 +195,7 @@ export function ExtractedValuesTable({ report, startEditing }: { report: Report;
             onChange={(e) => setHead({ ...head, impression: e.target.value })}
             placeholder={t('reports.impression')}
             rows={2}
-            className="w-full rounded border px-2 py-1"
+            className="w-full rounded-md border px-2 py-1"
           />
         </>
       )}
@@ -207,11 +207,11 @@ export function ExtractedValuesTable({ report, startEditing }: { report: Report;
       {save.isError && <p className="text-red-600">{save.error.message}</p>}
       <div className="flex gap-2">
         {editing ? (
-          <button onClick={submit} disabled={save.isPending} className="rounded bg-brand px-3 py-1 text-white disabled:opacity-60">
+          <button onClick={submit} disabled={save.isPending} className="btn btn-primary btn-sm">
             ✔ {t('reports.saveVerified')}
           </button>
         ) : (
-          <button onClick={() => setEditing(true)} className="rounded border px-3 py-1">
+          <button onClick={() => setEditing(true)} className="rounded-md border px-3 py-1">
             ✎ {t('reports.editValues')}
           </button>
         )}

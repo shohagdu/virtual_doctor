@@ -59,9 +59,9 @@ export function DoseCalculator({
   const [edited, setEdited] = useState<string | null>(null)
   const notes = edited ?? text
 
-  const input = 'mt-1 w-full rounded border px-2 py-1'
+  const input = 'mt-1 w-full rounded-md border px-2 py-1'
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-4 print:hidden">
+    <div className="overlay print:hidden">
       <div className="w-full max-w-md space-y-3 rounded-lg bg-white p-6 text-sm shadow-lg">
         <h2 className="text-lg font-semibold">🧮 {t('rxtools.doseCalc')}</h2>
         <div className="grid grid-cols-3 gap-2">
@@ -92,7 +92,7 @@ export function DoseCalculator({
         </div>
 
         {dose !== null && (
-          <dl className="grid grid-cols-2 gap-y-1 rounded bg-panel p-3">
+          <dl className="grid grid-cols-2 gap-y-1 rounded-md bg-panel p-3">
             <dt>{t('rxtools.perDose')}</dt>
             <dd className="text-right font-semibold">
               {fmt(dose)} mg{volume !== null && ` = ${fmt(volume)} ml`}
@@ -124,7 +124,7 @@ export function DoseCalculator({
         )}
         <p className="text-xs text-slate-500">{t('rxtools.calcDisclaimer')}</p>
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="rounded border px-4 py-2">
+          <button onClick={onClose} className="btn btn-secondary">
             {t('common.close')}
           </button>
           <button
@@ -133,7 +133,7 @@ export function DoseCalculator({
               onClose()
             }}
             disabled={!notes || f.line < 0}
-            className="rounded bg-brand px-4 py-2 text-white disabled:opacity-50"
+            className="btn btn-primary"
           >
             {t('rxtools.addToLine')}
           </button>

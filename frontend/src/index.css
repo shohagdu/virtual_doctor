@@ -4,26 +4,118 @@
 @theme {
   --font-sans: 'Hind Siliguri', ui-sans-serif, system-ui, sans-serif;
   /* Palette matching the existing prescription screen */
-  --color-infobar: #e8f3fc;
-  --color-panel: #f1f3f5;
+  --color-infobar: #eaf3fc;
+  --color-panel: #f3f5f8;
   --color-brand: #1d6fb8;
+  --color-brand-dark: #175a96;
+  --color-brand-50: #eef6fd;
+  --color-brand-100: #d7eafa;
+  --color-app: #f4f6fa;
 }
 
 @layer base {
-  /* Tailwind v4 defaults borders to currentColor; use the soft grey of the existing screens. */
+  /* Tailwind v4 defaults borders to currentColor; use a soft grey. */
   *,
   ::before,
   ::after {
-    border-color: var(--color-slate-300);
+    border-color: var(--color-slate-200);
   }
   input::placeholder,
   textarea::placeholder {
     color: var(--color-slate-400);
   }
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  label:has(> input[type='file']) {
+    cursor: pointer;
+  }
+  button,
+  a {
+    transition:
+      background-color 0.15s,
+      border-color 0.15s,
+      color 0.15s,
+      box-shadow 0.15s;
+  }
+  /* Form fields: a slightly stronger border and a clear focus ring everywhere. */
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']),
+  select,
+  textarea {
+    border-color: var(--color-slate-300);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brand) 18%, transparent);
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-brand);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap shadow-xs disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-sm {
+    @apply gap-1 px-3 py-1.5 text-sm;
+  }
+  .btn-primary {
+    @apply bg-brand text-white hover:bg-brand-dark;
+  }
+  .btn-secondary {
+    @apply border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-ghost {
+    @apply text-slate-600 shadow-none hover:bg-slate-100;
+  }
+  /* Modal backdrop and panel. */
+  .overlay {
+    @apply fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-[2px] sm:pt-12;
+  }
+  .dialog {
+    @apply rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-900/5;
+  }
 }
 
 body {
-  @apply bg-slate-100 text-slate-800;
+  @apply bg-app text-slate-800 antialiased;
+}
+
+@layer base {
+  @media screen {
+  /* Data tables: quiet header, row hover. */
+  table thead {
+    @apply text-xs tracking-wide text-slate-500 uppercase;
+  }
+  table thead th {
+    @apply font-semibold;
+  }
+  table tbody tr {
+    @apply transition-colors;
+  }
+  table tbody tr:hover {
+    background-color: color-mix(in oklab, var(--color-slate-100) 60%, transparent);
+  }
+  }
 }
 
 @page {

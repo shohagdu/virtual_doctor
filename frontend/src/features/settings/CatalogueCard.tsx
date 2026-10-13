@@ -23,7 +23,7 @@ export function CatalogueCard() {
         {data && <p>{t('rxtools.catalogueSize', { clinic: data.clinic_rows, shared: data.shared_rows })}</p>}
         <p className="text-slate-500">{t('rxtools.catalogueHelp')}</p>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="cursor-pointer rounded bg-brand px-3 py-1.5 text-white">
+          <label className="cursor-pointer rounded-md bg-brand px-3 py-1.5 text-white">
             📥 {t('rxtools.importCsv')}
             <input
               type="file"
@@ -45,7 +45,7 @@ export function CatalogueCard() {
         {imp.isPending && <p className="text-slate-500">{t('rxtools.importing', { name })}</p>}
         {imp.isError && <p className="text-red-600">{imp.error.message}</p>}
         {imp.data && (
-          <div className="rounded bg-panel p-2">
+          <div className="rounded-md bg-panel p-2">
             <p className="text-green-700">✔ {t('rxtools.imported', { added: imp.data.added, updated: imp.data.updated })}</p>
             {imp.data.problems.length > 0 && (
               <ul className="mt-1 text-xs text-amber-800">

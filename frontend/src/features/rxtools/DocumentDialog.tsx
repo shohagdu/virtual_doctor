@@ -34,9 +34,9 @@ export function DocumentDialog({
     <label className="block">
       {label}
       {type === 'area' ? (
-        <textarea value={body[key] ?? ''} onChange={(e) => set({ [key]: e.target.value || null })} rows={3} className="mt-1 w-full rounded border px-2 py-1" />
+        <textarea value={body[key] ?? ''} onChange={(e) => set({ [key]: e.target.value || null })} rows={3} className="mt-1 w-full rounded-md border px-2 py-1" />
       ) : (
-        <input type={type} value={body[key] ?? ''} onChange={(e) => set({ [key]: e.target.value || null })} className="mt-1 w-full rounded border px-2 py-1" />
+        <input type={type} value={body[key] ?? ''} onChange={(e) => set({ [key]: e.target.value || null })} className="mt-1 w-full rounded-md border px-2 py-1" />
       )}
     </label>
   )
@@ -47,7 +47,7 @@ export function DocumentDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-4 print:hidden">
+    <div className="overlay print:hidden">
       <div className="w-full max-w-lg space-y-3 rounded-lg bg-white p-6 text-sm shadow-lg">
         <h2 className="text-lg font-semibold">📝 {t('rxtools.documents')}</h2>
         <div className="flex gap-1" role="tablist">
@@ -57,7 +57,7 @@ export function DocumentDialog({
               role="tab"
               aria-selected={kind === k}
               onClick={() => setKind(k)}
-              className={`rounded px-3 py-1 ${kind === k ? 'bg-brand text-white' : 'border'}`}
+              className={`rounded-md px-3 py-1 ${kind === k ? 'bg-brand text-white' : 'border'}`}
             >
               {t(`rxtools.kind.${k}`)}
             </button>
@@ -88,13 +88,13 @@ export function DocumentDialog({
         {field('remarks', t('rxtools.remarks'))}
         {create.isError && <p className="text-red-600">{create.error.message}</p>}
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="rounded border px-4 py-2">
+          <button onClick={onClose} className="btn btn-secondary">
             {t('common.close')}
           </button>
           <button
             onClick={() => create.mutate({ kind, body }, { onSuccess: print })}
             disabled={create.isPending}
-            className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60"
+            className="btn btn-primary"
           >
             🖨 {t('rxtools.saveAndPrint')}
           </button>

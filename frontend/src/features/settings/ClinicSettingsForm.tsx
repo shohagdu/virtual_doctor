@@ -6,8 +6,9 @@ import { Card } from '../../components/Card'
 import { smsSegments } from '../../utils/sms'
 import { useClinicSettings, useSaveClinicSettings } from './api'
 import { useAiStatus } from '../ai/api'
+import { RxListsCard } from './RxListsCard'
 
-const input = 'mt-1 w-full rounded border px-3 py-2'
+const input = 'mt-1 w-full rounded-md border px-3 py-2'
 const VISIT_TYPES: VisitType[] = ['new', 'followup', 'report']
 const TEMPLATES = ['appointment_confirm', 'appointment_reminder', 'followup_reminder'] as const
 // Bangladesh week order: Saturday first.
@@ -101,7 +102,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
           <button
             type="button"
             onClick={() => set({ schedule: [...s.schedule, { weekday: 6, start: '17:00', end: '21:00' }] })}
-            className="rounded border px-2 py-1 text-sm text-brand"
+            className="rounded-md border px-2 py-1 text-sm text-brand"
           >
             ➕ {t('settings.addSession')}
           </button>
@@ -114,7 +115,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
               <select
                 value={x.weekday}
                 onChange={(e) => setSession(i, { weekday: Number(e.target.value) })}
-                className="rounded border bg-white px-2 py-1.5"
+                className="rounded-md border bg-white px-2 py-1.5"
                 aria-label={t('settings.day')}
               >
                 {WEEK.map((d) => (
@@ -127,7 +128,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
                 type="time"
                 value={x.start}
                 onChange={(e) => setSession(i, { start: e.target.value })}
-                className="rounded border px-2 py-1"
+                className="rounded-md border px-2 py-1"
                 aria-label={t('settings.from')}
               />
               –
@@ -135,7 +136,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
                 type="time"
                 value={x.end}
                 onChange={(e) => setSession(i, { end: e.target.value })}
-                className="rounded border px-2 py-1"
+                className="rounded-md border px-2 py-1"
                 aria-label={t('settings.to')}
               />
               <button
@@ -150,6 +151,8 @@ function Form({ initial }: { initial: ClinicSettings }) {
           ))}
         </ul>
       </Card>
+
+      <RxListsCard value={s.rx_lists} onChange={(rx_lists) => set({ rx_lists })} />
 
       <Card title={t('settings.sms')}>
         <div className="space-y-3 text-sm">
@@ -179,7 +182,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
               <select
                 value={s.sms.language}
                 onChange={(e) => setSms({ language: e.target.value as Lang })}
-                className="rounded border bg-white px-2 py-1"
+                className="rounded-md border bg-white px-2 py-1"
               >
                 <option value="bn">বাংলা</option>
                 <option value="en">English</option>
@@ -188,7 +191,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
           </div>
           <p className="text-slate-500">{t('settings.smsPlaceholders')}</p>
           {TEMPLATES.map((key) => (
-            <fieldset key={key} className="space-y-2 rounded border p-3">
+            <fieldset key={key} className="space-y-2 rounded-md border p-3">
               <legend className="px-1 font-medium">{t(`settings.tpl.${key}`)}</legend>
               {(['bn', 'en'] as const).map((lang) => {
                 const text = s.sms.templates[key][lang]
@@ -200,7 +203,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
                       rows={2}
                       maxLength={480}
                       onChange={(e) => setTemplate(key, lang, e.target.value)}
-                      className="mt-1 w-full rounded border px-3 py-2"
+                      className="mt-1 w-full rounded-md border px-3 py-2"
                     />
                     <span className="text-xs text-slate-500">
                       {t('settings.smsCount', { chars: [...text].length, parts: smsSegments(text) })}
@@ -222,7 +225,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
         }
       >
         <div className="space-y-2 text-sm">
-          {ai.data && !ai.data.configured && <p className="rounded bg-amber-50 px-3 py-2 text-amber-800">{t('settings.aiNoKey')}</p>}
+          {ai.data && !ai.data.configured && <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-800">{t('settings.aiNoKey')}</p>}
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={s.ai.enabled} onChange={(e) => setAi({ enabled: e.target.checked })} />
             {t('settings.aiEnabled')}
@@ -236,7 +239,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
             <select
               value={s.ai.advice_language}
               onChange={(e) => setAi({ advice_language: e.target.value as ClinicSettings['ai']['advice_language'] })}
-              className="rounded border bg-white px-2 py-1"
+              className="rounded-md border bg-white px-2 py-1"
             >
               <option value="both">English + বাংলা</option>
               <option value="bn">বাংলা</option>
@@ -248,7 +251,7 @@ function Form({ initial }: { initial: ClinicSettings }) {
       </Card>
 
       <div className="flex items-center gap-3">
-        <button disabled={save.isPending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60">
+        <button disabled={save.isPending} className="btn btn-primary">
           {t('patients.save')}
         </button>
         {save.isError && <p className="text-sm text-red-600">{save.error.message}</p>}

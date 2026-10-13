@@ -46,7 +46,7 @@ export function AiSummary({ patientId, available }: { patientId: string; availab
           <button
             onClick={generate}
             disabled={progress !== null}
-            className="ml-auto rounded bg-brand px-3 py-1.5 text-white disabled:opacity-60"
+            className="ml-auto rounded-md bg-brand px-3 py-1.5 text-white disabled:opacity-60"
           >
             🤖{' '}
             {progress !== null
@@ -64,7 +64,7 @@ export function AiSummary({ patientId, available }: { patientId: string; availab
         <p className="text-slate-500">{available ? t('ai.noSummary') : t('ai.off')}</p>
       ) : (
         <>
-          <p className="rounded bg-infobar px-3 py-2 font-medium">{data.content.one_line}</p>
+          <p className="rounded-md bg-infobar px-3 py-2 font-medium">{data.content.one_line}</p>
           <div className="grid gap-3 md:grid-cols-2">
             {SECTIONS.map(({ key, label }) => {
               const items = data.content[key]

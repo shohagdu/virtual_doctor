@@ -24,11 +24,11 @@ export function SmsDialog({ followup, onClose }: { followup: Followup; onClose: 
 function Shell({ onClose, children }: { onClose: () => void; children: ReactNode }) {
   const { t } = useTranslation()
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
-      <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-6 shadow-lg">
+    <div className="overlay">
+      <div className="w-full max-w-md space-y-4 dialog">
         {children}
         <div className="flex justify-end">
-          <button onClick={onClose} className="rounded border px-4 py-2">
+          <button onClick={onClose} className="btn btn-secondary">
             {t('common.close')}
           </button>
         </div>
@@ -51,8 +51,8 @@ function Form({ followup, draft, onClose }: { followup: Followup; draft: SmsDraf
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
-      <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-6 shadow-lg">
+    <div className="overlay">
+      <div className="w-full max-w-md space-y-4 dialog">
         <div>
           <h2 className="text-lg font-semibold">💬 {t('followups.smsTitle')}</h2>
           <p className="text-sm text-slate-500">
@@ -60,7 +60,7 @@ function Form({ followup, draft, onClose }: { followup: Followup; draft: SmsDraf
           </p>
         </div>
         {!draft.enabled && (
-          <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
             {t('followups.smsOff')}{' '}
             <Link to="/settings" className="underline">
               {t('nav.settings')}
@@ -68,7 +68,7 @@ function Form({ followup, draft, onClose }: { followup: Followup; draft: SmsDraf
           </p>
         )}
         {!draft.phone_ok && (
-          <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">{t('followups.notMobile')}</p>
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">{t('followups.notMobile')}</p>
         )}
         <label className="block text-sm">
           <textarea
@@ -76,7 +76,7 @@ function Form({ followup, draft, onClose }: { followup: Followup; draft: SmsDraf
             onChange={(e) => setBody(e.target.value)}
             rows={5}
             maxLength={480}
-            className="w-full rounded border px-3 py-2"
+            className="w-full rounded-md border px-3 py-2"
           />
           <span className="text-xs text-slate-500">
             {t('settings.smsCount', { chars: [...body].length, parts: smsSegments(body) })}
@@ -87,7 +87,7 @@ function Form({ followup, draft, onClose }: { followup: Followup; draft: SmsDraf
             type="button"
             onClick={async () => setBody((await aiDraft.mutateAsync(followup.id)).body)}
             disabled={aiDraft.isPending}
-            className="rounded border border-indigo-300 px-2 py-1 text-xs text-indigo-700 disabled:opacity-50"
+            className="rounded-md border border-indigo-300 px-2 py-1 text-xs text-indigo-700 disabled:opacity-50"
           >
             ✨ {aiDraft.isPending ? t('ai.writing') : t('ai.rewordSms')}
           </button>
@@ -95,13 +95,13 @@ function Form({ followup, draft, onClose }: { followup: Followup; draft: SmsDraf
         {aiDraft.isError && <p className="text-sm text-red-600">{aiDraft.error.message}</p>}
         {send.isError && <p className="text-sm text-red-600">{send.error.message}</p>}
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="rounded border px-4 py-2">
+          <button onClick={onClose} className="btn btn-secondary">
             {t('patients.cancel')}
           </button>
           <button
             onClick={submit}
             disabled={blocked || !body.trim() || send.isPending}
-            className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60"
+            className="btn btn-primary"
           >
             {t('followups.send')}
           </button>

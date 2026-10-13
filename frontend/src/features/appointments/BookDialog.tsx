@@ -41,14 +41,14 @@ export function BookDialog(props: Props) {
   const full = !!day?.daily_limit && day.booked >= day.daily_limit
 
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
-      <form onSubmit={submit} className="w-full max-w-lg space-y-4 rounded-lg bg-white p-6 shadow-lg">
+    <div className="overlay">
+      <form onSubmit={submit} className="w-full max-w-lg space-y-4 dialog">
         <h2 className="text-lg font-semibold">
           {moving ? `↔ ${t('appointments.move')}` : `📅 ${t('appointments.book')}`}
         </h2>
 
         {patient ? (
-          <div className="flex items-center gap-2 rounded bg-infobar px-3 py-2 text-sm">
+          <div className="flex items-center gap-2 rounded-md bg-infobar px-3 py-2 text-sm">
             <div className="min-w-0 flex-1">
               <b>{fullName(patient)}</b> · {patient.patient_code}
               <div className="text-xs text-slate-600">
@@ -77,7 +77,7 @@ export function BookDialog(props: Props) {
                 setTime('')
               }}
               required
-              className="mt-1 w-full rounded border px-3 py-2"
+              className="mt-1 w-full rounded-md border px-3 py-2"
             />
           </label>
           {!moving && (
@@ -86,7 +86,7 @@ export function BookDialog(props: Props) {
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as VisitType)}
-                className="mt-1 w-full rounded border bg-white px-2 py-2"
+                className="mt-1 w-full rounded-md border bg-white px-2 py-2"
               >
                 {(['new', 'followup', 'report'] as const).map((v) => (
                   <option key={v} value={v}>
@@ -115,7 +115,7 @@ export function BookDialog(props: Props) {
               value={time}
               onChange={(e) => setTime(e.target.value)}
               required
-              className="mt-1 w-full rounded border px-3 py-2"
+              className="mt-1 w-full rounded-md border px-3 py-2"
             />
           ) : !open ? (
             <p className="mt-1 text-slate-500">{t('appointments.closed')}</p>
@@ -132,7 +132,7 @@ export function BookDialog(props: Props) {
                     disabled={disabled}
                     onClick={() => setTime(s.time)}
                     title={s.taken ? t('appointments.taken') : undefined}
-                    className={`rounded border px-1 py-1.5 text-xs ${
+                    className={`rounded-md border px-1 py-1.5 text-xs ${
                       time === s.time
                         ? 'border-brand bg-brand text-white'
                         : disabled
@@ -155,19 +155,19 @@ export function BookDialog(props: Props) {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               maxLength={255}
-              className="mt-1 w-full rounded border px-3 py-2"
+              className="mt-1 w-full rounded-md border px-3 py-2"
             />
           </label>
         )}
 
         {mutation.isError && <p className="text-sm text-red-600">{mutation.error.message}</p>}
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={props.onClose} className="rounded border px-4 py-2">
+          <button type="button" onClick={props.onClose} className="btn btn-secondary">
             {t('patients.cancel')}
           </button>
           <button
             disabled={!patient || !time || mutation.isPending}
-            className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60"
+            className="btn btn-primary"
           >
             {moving ? t('appointments.move') : t('appointments.book')}
           </button>
@@ -193,18 +193,18 @@ function PatientPicker({ onPick }: { onPick: (p: PatientBrief) => void }) {
           onChange={(e) => setQ(e.target.value)}
           placeholder={`🔍 ${t('patients.search')}`}
           autoFocus
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded-md border px-3 py-2"
         />
         <button
           type="button"
           onClick={() => setRegistering(true)}
-          className="whitespace-nowrap rounded border px-3 py-2 text-brand"
+          className="whitespace-nowrap rounded-md border px-3 py-2 text-brand"
         >
           ➕ {t('patients.new')}
         </button>
       </div>
       {query.length >= 2 && data && (
-        <ul className="mt-1 max-h-56 divide-y overflow-y-auto rounded border">
+        <ul className="mt-1 max-h-56 divide-y overflow-y-auto rounded-md border">
           {data.items.length === 0 && <li className="px-3 py-2 text-slate-500">{t('patients.empty')}</li>}
           {data.items.map((p) => (
             <li key={p.id}>

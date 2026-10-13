@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { format, startOfMonth } from 'date-fns'
+import { Activity, ArrowDownToLine, ArrowUpFromLine, DatabaseZap } from 'lucide-react'
 import { Card } from '../../components/Card'
+import { StatCard } from '../../components/StatCard'
 import { fmtDate } from '../../utils/date'
 import { useAiUsage } from './api'
 
@@ -25,26 +27,19 @@ export function AiUsagePage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-lg font-semibold">🤖 {t('ai.usage')}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">🤖 {t('ai.usage')}</h1>
         <div className="ml-auto flex items-center gap-2 text-sm">
-          <input type="date" value={from} max={to} onChange={(e) => e.target.value && setFrom(e.target.value)} className="rounded border px-2 py-1" aria-label={t('settings.from')} />
+          <input type="date" value={from} max={to} onChange={(e) => e.target.value && setFrom(e.target.value)} className="rounded-md border px-2 py-1" aria-label={t('settings.from')} />
           –
-          <input type="date" value={to} min={from} onChange={(e) => e.target.value && setTo(e.target.value)} className="rounded border px-2 py-1" aria-label={t('settings.to')} />
+          <input type="date" value={to} min={from} onChange={(e) => e.target.value && setTo(e.target.value)} className="rounded-md border px-2 py-1" aria-label={t('settings.to')} />
         </div>
       </div>
       {isError && <p className="text-red-600">{error.message}</p>}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {[
-          { key: 'ai.calls', value: n(sum('calls')) },
-          { key: 'ai.inputTokens', value: n(sum('input_tokens')) },
-          { key: 'ai.outputTokens', value: n(sum('output_tokens')) },
-          { key: 'ai.cachedTokens', value: n(sum('cache_read_tokens')) },
-        ].map((c) => (
-          <div key={c.key} className="rounded-lg bg-white p-4 shadow-sm">
-            <div className="text-sm text-slate-500">{t(c.key)}</div>
-            <div className="text-2xl font-semibold">{data ? c.value : '—'}</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard icon={Activity} tone="blue" label={t('ai.calls')} value={data ? n(sum('calls')) : '—'} />
+        <StatCard icon={ArrowDownToLine} tone="violet" label={t('ai.inputTokens')} value={data ? n(sum('input_tokens')) : '—'} />
+        <StatCard icon={ArrowUpFromLine} tone="amber" label={t('ai.outputTokens')} value={data ? n(sum('output_tokens')) : '—'} />
+        <StatCard icon={DatabaseZap} tone="green" label={t('ai.cachedTokens')} value={data ? n(sum('cache_read_tokens')) : '—'} />
       </div>
       <Card>
         {rows.length === 0 ? (

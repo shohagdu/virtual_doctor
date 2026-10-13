@@ -5,7 +5,7 @@ use chrono::{Datelike, Duration, NaiveDate, NaiveTime};
 use serde::{Deserialize, Serialize};
 use vd_common::AppError;
 
-use crate::text::check_len;
+use crate::text::{check_len, list};
 use crate::visit::VisitType;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -19,6 +19,154 @@ pub struct ClinicSettings {
     pub daily_limit: Option<u16>,
     pub sms: SmsSettings,
     pub ai: AiSettings,
+    /// Pick lists for the prescription's sections, managed in Settings.
+    pub rx_lists: RxLists,
+}
+
+/// Items offered in each prescription section's dropdown. A doctor can still type
+/// anything; these are the clinic's usual entries.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
+pub struct RxLists {
+    pub complaints: Vec<String>,
+    pub examination: Vec<String>,
+    pub investigations: Vec<String>,
+    pub diagnosis: Vec<String>,
+    pub advice: Vec<String>,
+    pub next_plan: Vec<String>,
+    /// Offered for the patient profile's Chronic Conditions.
+    pub chronic_conditions: Vec<String>,
+}
+
+fn owned(items: &[&str]) -> Vec<String> {
+    items.iter().map(|s| s.to_string()).collect()
+}
+
+impl Default for RxLists {
+    fn default() -> Self {
+        Self {
+            complaints: owned(&[
+                "Fever",
+                "Cough",
+                "Headache",
+                "Sore throat",
+                "Runny nose",
+                "Body ache",
+                "Weakness",
+                "Dizziness",
+                "Abdominal pain",
+                "Vomiting",
+                "Loose motion",
+                "Constipation",
+                "Loss of appetite",
+                "Burning micturition",
+                "Chest pain",
+                "Shortness of breath",
+                "Palpitation",
+                "Joint pain",
+                "Back pain",
+                "Itching",
+                "Skin rash",
+            ]),
+            examination: owned(&[
+                "Anaemia: absent",
+                "Jaundice: absent",
+                "Oedema: absent",
+                "Cyanosis: absent",
+                "Dehydration: absent",
+                "Throat: congested",
+                "Tonsils: enlarged",
+                "Heart: S1 + S2 + 0",
+                "Lungs: clear",
+                "Lungs: crepitations present",
+                "Lungs: rhonchi present",
+                "Abdomen: soft, non-tender",
+                "Abdomen: epigastric tenderness",
+                "Liver: not palpable",
+                "Spleen: not palpable",
+                "Lymph nodes: not palpable",
+            ]),
+            investigations: owned(&[
+                "CBC",
+                "ESR",
+                "CRP",
+                "Urine R/E",
+                "Urine C/S",
+                "RBS",
+                "FBS",
+                "2HABF",
+                "HbA1c",
+                "S. Creatinine",
+                "S. Electrolytes",
+                "SGPT",
+                "Lipid profile",
+                "TSH",
+                "Widal test",
+                "Dengue NS1 antigen",
+                "Blood culture",
+                "Chest X-ray P/A view",
+                "ECG",
+                "USG of whole abdomen",
+            ]),
+            diagnosis: owned(&[
+                "Viral fever",
+                "URTI",
+                "LRTI",
+                "Acute pharyngitis",
+                "Allergic rhinitis",
+                "Enteric fever",
+                "Dengue fever",
+                "Acute gastroenteritis",
+                "Peptic ulcer disease",
+                "GERD",
+                "IBS",
+                "UTI",
+                "Hypertension",
+                "Type 2 diabetes mellitus",
+                "Bronchial asthma",
+                "Iron deficiency anaemia",
+                "Migraine",
+                "Tension-type headache",
+                "Osteoarthritis",
+                "Low back pain",
+            ]),
+            advice: owned(&[
+                "প্রচুর পানি পান করবেন",
+                "বিশ্রাম নিবেন",
+                "তৈলাক্ত ও ভাজা খাবার এড়িয়ে চলবেন",
+                "সময়মতো খাবার খাবেন",
+                "লবণ কম খাবেন",
+                "মিষ্টি খাবার এড়িয়ে চলবেন",
+                "ধূমপান করবেন না",
+                "প্রতিদিন ৩০ মিনিট হাঁটবেন",
+                "ওষুধের কোর্স সম্পূর্ণ করবেন",
+                "জ্বর বেশি হলে মাথায় পানি দিবেন",
+            ]),
+            next_plan: owned(&[
+                "Review after 7 days",
+                "Review after 14 days",
+                "Review after 1 month",
+                "Review with reports",
+                "Come back if symptoms get worse",
+            ]),
+            chronic_conditions: owned(&[
+                "Diabetes Mellitus",
+                "Hypertension",
+                "Asthma",
+                "COPD",
+                "CKD",
+                "IHD",
+                "Hypothyroidism",
+                "Hyperthyroidism",
+                "Dyslipidaemia",
+                "Epilepsy",
+                "Rheumatoid arthritis",
+                "Osteoarthritis",
+                "Chronic liver disease",
+                "Stroke",
+            ]),
+        }
+    }
 }
 
 /// AI features (AI spec §13, PM spec §7.4).
@@ -195,12 +343,14 @@ impl Default for ClinicSettings {
             daily_limit: None,
             sms: SmsSettings::default(),
             ai: AiSettings::default(),
+            rx_lists: RxLists::default(),
         }
     }
 }
 
 const MAX_FEE: u32 = 100_000;
 pub const MAX_SMS_CHARS: usize = 480;
+const MAX_LIST_ITEMS: usize = 500;
 
 impl ClinicSettings {
     pub fn validate(&mut self) -> Result<(), AppError> {
@@ -231,6 +381,23 @@ impl ClinicSettings {
             if w[0].weekday == w[1].weekday && w[1].start < w[0].end {
                 return bad("schedule: sessions on the same day overlap");
             }
+        }
+        let l = &mut self.rx_lists;
+        for (name, items) in [
+            ("chief complaints", &mut l.complaints),
+            ("on examination", &mut l.examination),
+            ("investigations", &mut l.investigations),
+            ("diagnosis", &mut l.diagnosis),
+            ("advice", &mut l.advice),
+            ("next plan", &mut l.next_plan),
+            ("chronic conditions", &mut l.chronic_conditions),
+        ] {
+            *items = list(
+                std::mem::take(items),
+                &format!("{name} list"),
+                MAX_LIST_ITEMS,
+                150,
+            )?;
         }
         let t = &mut self.sms.templates;
         for (name, tpl) in [
@@ -346,6 +513,25 @@ mod tests {
             ..Default::default()
         };
         assert!(s.validate().is_err());
+    }
+
+    #[test]
+    fn cleans_rx_lists() {
+        let mut s = ClinicSettings::default();
+        s.rx_lists.complaints = vec![" Fever ".into(), "Fever".into(), "".into(), "Cough".into()];
+        s.rx_lists.advice = vec![];
+        s.validate().unwrap();
+        assert_eq!(s.rx_lists.complaints, vec!["Fever", "Cough"]);
+        // An emptied list stays empty; defaults apply only when never saved.
+        assert!(s.rx_lists.advice.is_empty());
+        let saved: ClinicSettings = serde_json::from_str(r#"{"slot_minutes":10}"#).unwrap();
+        assert!(!saved.rx_lists.diagnosis.is_empty());
+        assert!(
+            saved
+                .rx_lists
+                .chronic_conditions
+                .contains(&"Hypertension".to_string())
+        );
     }
 
     #[test]

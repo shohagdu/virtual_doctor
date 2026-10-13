@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import type { MedicineLine, VisitSummary } from '../../api/types'
+import type { MedicineLine, Report, VisitSummary } from '../../api/types'
+import { VisitReports } from '../reports/VisitReports'
 import { fmtDate } from '../../utils/date'
 import { medicineDirections, medicineName } from '../prescription/medicine'
 
 const key = (m: MedicineLine) => m.brand.trim().toLowerCase()
 
 /** Profile → Prescriptions (§5.4): every prescription, and any two side by side. */
-export function PrescriptionsTab({ visits }: { visits: VisitSummary[] }) {
+export function PrescriptionsTab({ visits, reports = [] }: { visits: VisitSummary[]; reports?: Report[] }) {
   const { t } = useTranslation()
   const withRx = visits.filter((v) => v.prescription)
   const [picked, setPicked] = useState<number[]>([])
@@ -41,8 +42,13 @@ export function PrescriptionsTab({ visits }: { visits: VisitSummary[] }) {
                   {rx.locked ? ' 🔒' : ''} · {t('rxtools.nMedicines', { count: rx.medicines.length })}
                 </span>
                 <div className="text-xs text-slate-500">{rx.medicines.map(medicineName).join(' · ')}</div>
+                {reports.some((r) => r.visit_id === v.id) && (
+                  <div className="mt-2">
+                    <VisitReports reports={reports.filter((r) => r.visit_id === v.id)} showValues />
+                  </div>
+                )}
               </div>
-              <Link to={`/visits/${v.id}/prescription`} className="rounded border px-2 py-0.5 text-xs text-brand">
+              <Link to={`/visits/${v.id}/prescription`} className="rounded-md border px-2 py-0.5 text-xs text-brand">
                 {t('visits.viewRx')}
               </Link>
             </li>
@@ -74,7 +80,7 @@ function Compare({ a, b }: { a: VisitSummary; b: VisitSummary }) {
         {mine.map((m, i) => {
           const s = status(m, other)
           return (
-            <li key={i} className={`rounded px-1 ${s === 'only' ? onlyClass : cls[s]}`}>
+            <li key={i} className={`rounded-md px-1 ${s === 'only' ? onlyClass : cls[s]}`}>
               ℞ <b>{medicineName(m)}</b> {medicineDirections(m)}
             </li>
           )
@@ -83,12 +89,12 @@ function Compare({ a, b }: { a: VisitSummary; b: VisitSummary }) {
     </div>
   )
   return (
-    <section className="space-y-2 rounded border p-3">
+    <section className="space-y-2 rounded-md border p-3">
       <h3 className="font-semibold">{t('rxtools.comparison')}</h3>
       <p className="flex flex-wrap gap-3 text-xs">
-        <span className="rounded bg-red-50 px-1 text-red-800 line-through">{t('rxtools.stopped')}</span>
-        <span className="rounded bg-green-50 px-1 text-green-800">{t('rxtools.started')}</span>
-        <span className="rounded bg-amber-50 px-1">{t('rxtools.changed')}</span>
+        <span className="rounded-md bg-red-50 px-1 text-red-800 line-through">{t('rxtools.stopped')}</span>
+        <span className="rounded-md bg-green-50 px-1 text-green-800">{t('rxtools.started')}</span>
+        <span className="rounded-md bg-amber-50 px-1">{t('rxtools.changed')}</span>
       </p>
       <div className="grid gap-4 md:grid-cols-2">
         {column(a, ra.medicines, rb.medicines, 'bg-red-50 text-red-800 line-through')}

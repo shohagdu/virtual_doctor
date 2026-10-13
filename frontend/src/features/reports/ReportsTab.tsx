@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { fileUrl } from '../../api/stream'
+import { Maximize2 } from 'lucide-react'
 import type { Report } from '../../api/types'
 import { fmtDate } from '../../utils/date'
 import { useLabTrends, usePatientReports } from './api'
 import { statusStyle } from './lab'
+import { ReportViewer } from './ReportViewer'
+import { ReportThumb as Thumb } from './ReportThumb'
 
 /** Profile → Reports (FR-38, FR-39): every report by date, and a trend for repeated tests. */
 export function ReportsTab({ patientId, clinical }: { patientId: string; clinical: boolean }) {
@@ -13,27 +15,39 @@ export function ReportsTab({ patientId, clinical }: { patientId: string; clinica
   const { data, isLoading } = usePatientReports(patientId)
   if (isLoading || !data) return <p className="text-slate-500">{t('common.loading')}</p>
   if (data.length === 0) return <p className="text-slate-500">{t('reports.none')}</p>
+  return <ReportList reports={data} patientId={patientId} clinical={clinical} />
+}
+
+function ReportList({ reports, patientId, clinical }: { reports: Report[]; patientId: string; clinical: boolean }) {
+  const [open, setOpen] = useState<number | null>(null)
   return (
     <div className="space-y-4">
       {clinical && <LabTrend patientId={patientId} />}
       <ul className="divide-y">
-        {data.map((r) => (
-          <ReportRow key={r.id} r={r} />
+        {reports.map((r, i) => (
+          <ReportRow key={r.id} r={r} onView={() => setOpen(i)} />
         ))}
       </ul>
+      {open !== null && (
+        <ReportViewer reports={reports} index={open} onIndex={setOpen} onClose={() => setOpen(null)} showValues={clinical} />
+      )}
     </div>
   )
 }
 
-function ReportRow({ r }: { r: Report }) {
+
+function ReportRow({ r, onView }: { r: Report; onView: () => void }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const flagged = r.results.filter((x) => x.status && x.status !== 'normal')
   return (
-    <li className="py-2 text-sm">
-      <div className="flex flex-wrap items-center gap-2">
+    <li className="py-3 text-sm">
+      <div className="flex flex-wrap items-center gap-3">
+        <Thumb r={r} onClick={onView} />
         <span className="w-24 whitespace-nowrap text-slate-500">{fmtDate(r.report_date ?? r.created_at)}</span>
-        <b>{r.report_type ?? r.original_name ?? t('reports.untitled')}</b>
+        <button onClick={onView} className="font-semibold text-slate-900 hover:text-brand">
+          {r.report_type ?? r.original_name ?? t('reports.untitled')}
+        </button>
         {r.lab_name && <span className="text-xs text-slate-500">{r.lab_name}</span>}
         {flagged.length > 0 && (
           <span className="text-xs text-orange-700">
@@ -42,15 +56,12 @@ function ReportRow({ r }: { r: Report }) {
         )}
         <span className="ml-auto flex gap-1">
           {r.results.length > 0 && (
-            <button onClick={() => setOpen(!open)} className="rounded border px-2 py-0.5 text-xs">
+            <button onClick={() => setOpen(!open)} className="btn btn-ghost btn-sm">
               {open ? '▲' : '▼'} {t('reports.values')}
             </button>
           )}
-          <button
-            onClick={async () => window.open(await fileUrl(`/reports/${r.id}/file`), '_blank', 'noopener')}
-            className="rounded border px-2 py-0.5 text-xs"
-          >
-            {t('reports.viewFile')} ↗
+          <button onClick={onView} className="btn btn-secondary btn-sm">
+            <Maximize2 className="h-3.5 w-3.5" /> {t('reports.view')}
           </button>
         </span>
       </div>
@@ -96,7 +107,7 @@ function LabTrend({ patientId }: { patientId: string }) {
         <select
           value={data.test ?? ''}
           onChange={(e) => setTest(e.target.value)}
-          className="rounded border bg-white px-2 py-1"
+          className="rounded-md border bg-white px-2 py-1"
           aria-label={t('reports.test')}
         >
           {(repeated.length ? repeated : data.tests).map((x) => (

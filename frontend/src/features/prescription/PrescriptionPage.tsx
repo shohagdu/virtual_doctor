@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ComponentType } from 'react'
+import { ClipboardList, FilePen, FileUp, History, Images, Lock, Printer, Save, ScrollText, SkipForward, Sparkles } from 'lucide-react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
@@ -10,8 +11,11 @@ import { fmtDate, todayIso } from '../../utils/date'
 import { useVisits } from '../patients/api'
 import { useCallNext } from '../queue/api'
 import { useAiAvailable } from '../ai/api'
+import { useClinicSettings } from '../settings/api'
 import { AiSummary } from '../ai/AiSummary'
 import type { Insert } from '../reports/FindingsPanel'
+import { usePatientReports } from '../reports/api'
+import { PatientReportsDrawer } from '../reports/PatientReportsDrawer'
 import { ReportDrawer } from '../reports/ReportDrawer'
 import { SafetyPanel } from '../reports/SafetyPanel'
 import { useAddFavorite, useFavorites } from '../rxtools/api'
@@ -92,6 +96,8 @@ function PrescriptionEditor({
   const [drawer, setDrawer] = useState(false)
   const [vitalsOpen, setVitalsOpen] = useState(false)
   const [reportsOpen, setReportsOpen] = useState(false)
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const patientReports = usePatientReports(String(patient.id))
   const [summaryOpen, setSummaryOpen] = useState(false)
   const [templatesOpen, setTemplatesOpen] = useState(false)
   const [calcOpen, setCalcOpen] = useState(false)
@@ -99,6 +105,7 @@ function PrescriptionEditor({
   const favorites = useFavorites()
   const addFavorite = useAddFavorite()
   const aiAvailable = useAiAvailable()
+  const lists = useClinicSettings().data?.rx_lists
 
   const initial = useMemo(() => {
     const b = bodyOf(rx)
@@ -188,63 +195,60 @@ function PrescriptionEditor({
     setTimeout(() => window.print(), 100)
   }
 
+  // Each section offers the clinic's own list (Settings → Prescription lists).
   const section = (key: 'complaints' | 'examination' | 'investigations' | 'diagnosis', title: string) => (
-    <ListSection title={title} items={body[key]} onChange={(items) => set({ [key]: items })} />
+    <ListSection title={title} items={body[key]} onChange={(items) => set({ [key]: items })} suggestions={lists?.[key]} />
   )
 
   return (
     <>
       <div className="space-y-4 print:hidden">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-lg font-semibold">{t('rx.title')}</h1>
-          <span className="text-sm text-slate-500">
-            {rx.id === null
-              ? t('rx.new')
-              : rx.locked
-                ? t('rx.lockedNote', { v: rx.version })
-                : `${t('rx.draft')} v${rx.version}`}
-            {dirty && ` · ${t('rx.unsaved')}`}
-          </span>
-          <div className="ml-auto flex flex-wrap gap-2">
-            <button onClick={() => setReportsOpen(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
-              📄 {t('reports.upload')}
+        <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('rx.title')}</h1>
+            <p className="flex items-center gap-2 text-sm text-slate-500">
+              {rx.locked ? <Lock className="h-3.5 w-3.5" /> : <FilePen className="h-3.5 w-3.5" />}
+              {rx.id === null ? t('rx.new') : rx.locked ? t('rx.lockedNote', { v: rx.version }) : `${t('rx.draft')} v${rx.version}`}
+              {dirty && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  {t('rx.unsaved')}
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {/* Tools */}
+            <div className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-xs">
+              <ToolButton icon={FileUp} label={t('reports.upload')} onClick={() => setReportsOpen(true)} />
+              <ToolButton
+                icon={Images}
+                label={`${t('reports.patientReports')}${patientReports.data?.length ? ` (${patientReports.data.length})` : ''}`}
+                onClick={() => setGalleryOpen(true)}
+              />
+              {aiAvailable && <ToolButton icon={Sparkles} label={t('ai.summariseHistory')} onClick={() => setSummaryOpen(true)} />}
+              <ToolButton icon={ClipboardList} label={t('rxtools.templates')} onClick={() => setTemplatesOpen(true)} />
+              <ToolButton icon={ScrollText} label={t('rxtools.certificate')} onClick={() => setDocOpen(true)} />
+              <ToolButton
+                icon={History}
+                label={`${t('rx.history')}${previous.length > 0 ? ` (${previous.length})` : ''}`}
+                onClick={() => setDrawer(true)}
+              />
+            </div>
+            {/* Actions */}
+            <button onClick={() => doSave()} disabled={busy || !dirty || blockedByAllergy} className="btn btn-secondary">
+              <Save className="h-4 w-4" /> {t('rx.save')}
             </button>
-            {aiAvailable && (
-              <button onClick={() => setSummaryOpen(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
-                🤖 {t('ai.summariseHistory')}
-              </button>
-            )}
-            <button onClick={() => setTemplatesOpen(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
-              📋 {t('rxtools.templates')}
-            </button>
-            <button onClick={() => setDocOpen(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
-              📝 {t('rxtools.certificate')}
-            </button>
-            <button onClick={() => setDrawer(true)} className="rounded bg-slate-500 px-3 py-1.5 text-sm text-white">
-              🕘 {t('rx.history')}
-              {previous.length > 0 && ` (${previous.length})`}
-            </button>
-            <button
-              onClick={() => doSave()}
-              disabled={busy || !dirty || blockedByAllergy}
-              className="rounded bg-brand px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            >
-              💾 {t('rx.save')}
-            </button>
-            <button
-              onClick={doPrint}
-              disabled={busy || blockedByAllergy}
-              className="rounded bg-green-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            >
-              🖨 {t('rx.printPdf')}
+            <button onClick={doPrint} disabled={busy || blockedByAllergy} className="btn btn-primary">
+              <Printer className="h-4 w-4" /> {t('rx.printPdf')}
             </button>
             {isToday && (
               <button
                 onClick={doNext}
                 disabled={busy || (dirty && blockedByAllergy)}
-                className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                className="btn bg-emerald-600 text-white hover:bg-emerald-700"
               >
-                {dirty ? t('rx.saveAndNext') : t('rx.nextPatient')} ⏭
+                {dirty ? t('rx.saveAndNext') : t('rx.nextPatient')} <SkipForward className="h-4 w-4" />
               </button>
             )}
           </div>
@@ -262,7 +266,7 @@ function PrescriptionEditor({
         </PatientInfoBar>
 
         {draft.offer && (
-          <div className="flex flex-wrap items-center gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="flex flex-wrap items-center gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
             {t('rxtools.draftFound', { time: new Date(draft.offer.at).toLocaleString() })}
             <button
               onClick={() => {
@@ -270,21 +274,21 @@ function PrescriptionEditor({
                 setDirty(true)
                 draft.taken()
               }}
-              className="rounded bg-amber-600 px-2 py-0.5 text-white"
+              className="rounded-md bg-amber-600 px-2 py-0.5 text-white"
             >
               {t('rxtools.restore')}
             </button>
-            <button onClick={draft.dismiss} className="rounded border border-amber-400 px-2 py-0.5">
+            <button onClick={draft.dismiss} className="rounded-md border border-amber-400 px-2 py-0.5">
               {t('rxtools.discard')}
             </button>
           </div>
         )}
 
         {error && (
-          <div className="flex flex-wrap items-center gap-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+          <div className="flex flex-wrap items-center gap-3 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
             {error.message}
             {conflict && (
-              <button onClick={() => window.location.reload()} className="rounded border border-red-400 px-2 py-0.5">
+              <button onClick={() => window.location.reload()} className="rounded-md border border-red-400 px-2 py-0.5">
                 {t('rx.reload')}
               </button>
             )}
@@ -292,7 +296,7 @@ function PrescriptionEditor({
         )}
 
         {matches.length > 0 && (
-          <div className="rounded border border-red-400 bg-red-50 p-3 text-sm text-red-800">
+          <div className="rounded-md border border-red-400 bg-red-50 p-3 text-sm text-red-800">
             <p className="font-semibold">⚠ {t('rx.allergyWarning')}</p>
             <ul className="ml-5 list-disc">
               {matches.map((m) => (
@@ -362,7 +366,7 @@ function PrescriptionEditor({
                 <button
                   type="button"
                   onClick={() => setCalcOpen(true)}
-                  className="rounded border px-2 py-1 text-xs"
+                  className="rounded-md border px-2 py-1 text-xs"
                   title={t('rxtools.doseCalc')}
                 >
                   🧮 {t('rxtools.doseCalcShort')}
@@ -371,7 +375,7 @@ function PrescriptionEditor({
                   <button
                     type="button"
                     onClick={() => copyMedicines(lastRx.prescription?.medicines ?? [])}
-                    className="rounded border px-2 py-1 text-xs text-brand"
+                    className="rounded-md border px-2 py-1 text-xs text-brand"
                   >
                     ↻ {t('rx.repeatLast', { date: fmtDate(lastRx.visit_date) })}
                   </button>
@@ -394,8 +398,13 @@ function PrescriptionEditor({
               />
             </div>
             <SafetyPanel visitId={visit.id} medicines={body.medicines} />
-            <ListSection title={t('rx.advice')} items={body.advice} onChange={(advice) => set({ advice })} />
-            <ListSection title={t('rx.nextPlan')} items={body.next_plan} onChange={(next_plan) => set({ next_plan })} />
+            <ListSection title={t('rx.advice')} items={body.advice} onChange={(advice) => set({ advice })} suggestions={lists?.advice} />
+            <ListSection
+              title={t('rx.nextPlan')}
+              items={body.next_plan}
+              onChange={(next_plan) => set({ next_plan })}
+              suggestions={lists?.next_plan}
+            />
             <label className="block text-sm font-semibold">
               {t('rx.nextVisit')}
               <input
@@ -403,7 +412,7 @@ function PrescriptionEditor({
                 min={todayIso()}
                 value={body.next_visit_date ?? ''}
                 onChange={(e) => set({ next_visit_date: e.target.value || null })}
-                className="mt-1 block rounded border px-2 py-1 font-normal"
+                className="mt-1 block rounded-md border px-2 py-1 font-normal"
               />
             </label>
           </section>
@@ -448,6 +457,9 @@ function PrescriptionEditor({
         />
       )}
       {docOpen && <DocumentDialog visit={visit} patient={patient} diagnosis={body.diagnosis} onClose={() => setDocOpen(false)} />}
+      {galleryOpen && (
+        <PatientReportsDrawer patientId={patient.id} visitId={visit.id} showValues onClose={() => setGalleryOpen(false)} />
+      )}
       {reportsOpen && (
         <ReportDrawer
           visitId={visit.id}
@@ -465,7 +477,7 @@ function PrescriptionEditor({
       )}
       {summaryOpen && (
         <div className="fixed inset-0 z-30 print:hidden" role="dialog" aria-label={t('ai.summaryTitle')}>
-          <div className="absolute inset-0 bg-black/30" onClick={() => setSummaryOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={() => setSummaryOpen(false)} />
           <aside className="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-4 shadow-xl">
             <div className="mb-3 flex items-center">
               <h2 className="font-semibold">🤖 {t('ai.summaryTitle')}</h2>
@@ -479,5 +491,21 @@ function PrescriptionEditor({
       )}
       {vitalsOpen && <VitalsDialog visitId={visit.id} patientId={patient.id} onClose={() => setVitalsOpen(false)} />}
     </>
+  )
+}
+
+/** A compact toolbar button: icon always, label from medium screens up. */
+function ToolButton({ icon: Icon, label, onClick }: { icon: ComponentType<{ className?: string }>; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+    >
+      <Icon className="h-4 w-4" />
+      <span className="hidden xl:inline">{label}</span>
+    </button>
   )
 }

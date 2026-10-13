@@ -208,7 +208,10 @@ export interface SmsTemplate {
   bn: string
 }
 
+export type RxListKey = 'complaints' | 'examination' | 'investigations' | 'diagnosis' | 'advice' | 'next_plan' | 'chronic_conditions'
+
 export interface ClinicSettings {
+  rx_lists: Record<RxListKey, string[]>
   ai: { enabled: boolean; auto_extract: boolean; advice_language: 'en' | 'bn' | 'both' }
   fees: Record<VisitType, number>
   schedule: ChamberSession[]

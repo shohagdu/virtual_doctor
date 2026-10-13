@@ -12,7 +12,7 @@ export function BillingTab({ patientId }: { patientId: string }) {
   const due = data.reduce((s, r) => s + r.due, 0)
   return (
     <div className="space-y-2 text-sm">
-      {due > 0 && <p className="rounded bg-amber-50 px-3 py-2 font-medium text-amber-800">{t('rxtools.totalDue', { amount: taka(due) })}</p>}
+      {due > 0 && <p className="rounded-md bg-amber-50 px-3 py-2 font-medium text-amber-800">{t('rxtools.totalDue', { amount: taka(due) })}</p>}
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead className="border-b text-slate-500">

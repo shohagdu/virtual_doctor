@@ -9,7 +9,7 @@ import { ageText } from '../../utils/age'
 import { useCreatePatient, useUpdatePatient } from './api'
 import { patientSchema, type PatientForm } from './schema'
 
-const input = 'mt-1 w-full rounded border px-3 py-2'
+const input = 'mt-1 w-full rounded-md border px-3 py-2'
 
 function toForm(p: Patient): PatientForm {
   return {
@@ -76,8 +76,8 @@ export function PatientFormDialog({
     errors[name] && <span className="text-xs text-red-600">{errors[name]?.message}</span>
 
   return (
-    <div className="fixed inset-0 z-10 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
-      <form onSubmit={save(false)} className="w-full max-w-2xl space-y-4 rounded-lg bg-white p-6 shadow-lg">
+    <div className="overlay">
+      <form onSubmit={save(false)} className="w-full max-w-2xl space-y-4 dialog">
         <h2 className="text-lg font-semibold">{patient ? t('patients.edit') : t('patients.new')}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm">
@@ -144,7 +144,7 @@ export function PatientFormDialog({
         </div>
 
         {duplicates.length > 0 && (
-          <div className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">
             <p className="mb-2 font-medium">{t('patients.duplicates')}</p>
             <ul className="space-y-1">
               {duplicates.map((p) => (
@@ -169,15 +169,15 @@ export function PatientFormDialog({
         {mutation.isError && <p className="text-sm text-red-600">{mutation.error.message}</p>}
 
         <div className="flex flex-wrap justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded border px-4 py-2">
+          <button type="button" onClick={onClose} className="btn btn-secondary">
             {t('patients.cancel')}
           </button>
           {duplicates.length > 0 ? (
-            <button type="button" onClick={save(true)} className="rounded bg-amber-600 px-4 py-2 text-white">
+            <button type="button" onClick={save(true)} className="rounded-md bg-amber-600 px-4 py-2 text-white">
               {t('patients.createAnyway')}
             </button>
           ) : (
-            <button disabled={mutation.isPending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60">
+            <button disabled={mutation.isPending} className="btn btn-primary">
               {t('patients.save')}
             </button>
           )}

@@ -8,7 +8,7 @@ import { Card } from '../../components/Card'
 import { CatalogueCard } from './CatalogueCard'
 import { ClinicSettingsForm } from './ClinicSettingsForm'
 
-const input = 'mt-1 w-full rounded border px-3 py-2'
+const input = 'mt-1 w-full rounded-md border px-3 py-2'
 
 /** Doctor and clinic details printed on the prescription pad (§12). */
 export function SettingsPage() {
@@ -74,7 +74,7 @@ function ProfileForm({ me }: { me: Me }) {
           </>
         )}
         <StatusLine status={status} />
-        <button disabled={pending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60">
+        <button disabled={pending} className="btn btn-primary">
           {t('patients.save')}
         </button>
       </form>
@@ -102,7 +102,7 @@ function ClinicForm({ me }: { me: Me }) {
           <input name="phone" defaultValue={c.phone ?? ''} className={input} />
         </label>
         <StatusLine status={status} />
-        <button disabled={pending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60">
+        <button disabled={pending} className="btn btn-primary">
           {t('patients.save')}
         </button>
       </form>

@@ -39,7 +39,7 @@ export function SafetyPanel({ visitId, medicines }: { visitId: number; medicines
           check.mutate(lines)
         }}
         disabled={check.isPending || lines.length === 0}
-        className="rounded border px-2 py-1 text-xs disabled:opacity-50"
+        className="rounded-md border px-2 py-1 text-xs disabled:opacity-50"
       >
         💊 {check.isPending ? t('ai.checking') : t('ai.checkRx')}
       </button>
@@ -51,7 +51,7 @@ export function SafetyPanel({ visitId, medicines }: { visitId: number; medicines
         </p>
       )}
       {warnings.map((w) => (
-        <div key={w.id} className={`rounded border p-2 ${severityClass[w.severity] ?? severityClass.low}`}>
+        <div key={w.id} className={`rounded-md border p-2 ${severityClass[w.severity] ?? severityClass.low}`}>
           <div className="flex gap-2">
             <span className="font-semibold">{w.medicines.join(' + ')}</span>
             <span className="text-xs uppercase">{t(`ai.severity.${w.severity}`, w.severity)}</span>
@@ -68,9 +68,9 @@ export function SafetyPanel({ visitId, medicines }: { visitId: number; medicines
                 placeholder={t('ai.dismissReason')}
                 maxLength={255}
                 autoFocus
-                className="min-w-0 flex-1 rounded border bg-white px-1.5 py-0.5 text-xs"
+                className="min-w-0 flex-1 rounded-md border bg-white px-1.5 py-0.5 text-xs"
               />
-              <button type="button" onClick={dismiss} disabled={!dismissing.reason.trim() || act.isPending} className="rounded border bg-white px-2 text-xs disabled:opacity-50">
+              <button type="button" onClick={dismiss} disabled={!dismissing.reason.trim() || act.isPending} className="rounded-md border bg-white px-2 text-xs disabled:opacity-50">
                 {t('ai.dismiss')}
               </button>
             </div>

@@ -9,7 +9,7 @@ const DOSES = ['1+0+1', '1+1+1', '1+0+0', '0+0+1', '0+1+0', '1+1+1+1', '½+0+½'
 const TIMINGS = ['খাবারের পরে', 'খাবারের আগে', 'খাবারের সাথে', 'ঘুমানোর আগে', 'খালি পেটে']
 const DURATIONS = ['৩ দিন', '৫ দিন', '৭ দিন', '১০ দিন', '১৪ দিন', '১ মাস', '৩ মাস', 'চলবে']
 
-const cell = 'w-full rounded border bg-white px-2 py-1 text-sm'
+const cell = 'w-full rounded-md border bg-white px-2 py-1 text-sm'
 
 /** The ℞ panel: one editable row per medicine. */
 export function MedicineEditor({
@@ -41,7 +41,7 @@ export function MedicineEditor({
       {lines.map((line, i) => (
         <div
           key={i}
-          className={`grid gap-2 rounded border p-2 sm:grid-cols-[2fr_1fr_1fr_1.3fr_1fr_auto] ${
+          className={`grid gap-2 rounded-md border p-2 sm:grid-cols-[2fr_1fr_1fr_1.3fr_1fr_auto] ${
             flagged.has(line.brand) ? 'border-red-500 bg-red-50' : 'border-slate-200'
           }`}
         >
@@ -163,7 +163,7 @@ function BrandInput({
       />
       {line.generic && <div className="px-1 text-xs text-slate-500">{line.generic}</div>}
       {open && !readOnly && data && data.length > 0 && (
-        <ul className="absolute z-20 mt-1 max-h-60 w-72 overflow-y-auto rounded border bg-white shadow-lg">
+        <ul className="absolute z-20 mt-1 max-h-60 w-72 overflow-y-auto rounded-md border bg-white shadow-lg">
           {data.map((m) => (
             <li key={`${m.brand}-${m.strength}`}>
               <button

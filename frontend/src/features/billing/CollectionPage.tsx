@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { format, startOfMonth, subDays } from 'date-fns'
+import { BadgePercent, Banknote, Clock, Receipt } from 'lucide-react'
 import { Card } from '../../components/Card'
+import { StatCard } from '../../components/StatCard'
 import { fmtDate, todayIso } from '../../utils/date'
 import { taka } from '../../utils/money'
 import { useCollection } from './api'
@@ -32,7 +34,7 @@ export function CollectionPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 print:hidden">
-        <h1 className="text-lg font-semibold">{t('billing.collection')}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('billing.collection')}</h1>
         <div className="ml-auto flex flex-wrap items-center gap-2 text-sm">
           {presets.map((p) => (
             <button
@@ -42,7 +44,7 @@ export function CollectionPage() {
                 setTo(p.to)
               }}
               aria-pressed={from === p.from && to === p.to}
-              className={`rounded px-3 py-1.5 ${from === p.from && to === p.to ? 'bg-brand text-white' : 'border bg-white'}`}
+              className={`rounded-md px-3 py-1.5 ${from === p.from && to === p.to ? 'bg-brand text-white' : 'border bg-white'}`}
             >
               {t(p.key)}
             </button>
@@ -52,7 +54,7 @@ export function CollectionPage() {
             value={from}
             max={to}
             onChange={(e) => e.target.value && setFrom(e.target.value)}
-            className="rounded border px-2 py-1"
+            className="rounded-md border px-2 py-1"
             aria-label={t('settings.from')}
           />
           –
@@ -61,10 +63,10 @@ export function CollectionPage() {
             value={to}
             min={from}
             onChange={(e) => e.target.value && setTo(e.target.value)}
-            className="rounded border px-2 py-1"
+            className="rounded-md border px-2 py-1"
             aria-label={t('settings.to')}
           />
-          <button onClick={() => window.print()} className="rounded border bg-white px-3 py-1.5">
+          <button onClick={() => window.print()} className="rounded-md border bg-white px-3 py-1.5">
             🖨 {t('billing.print')}
           </button>
         </div>
@@ -76,18 +78,11 @@ export function CollectionPage() {
 
       {isError && <p className="text-red-600">{error.message}</p>}
 
-      <div className={`grid grid-cols-2 gap-4 md:grid-cols-4 ${isFetching ? 'opacity-70' : ''}`}>
-        {[
-          { key: 'billing.collected', value: tot && taka(tot.paid) },
-          { key: 'billing.due', value: tot && taka(tot.due) },
-          { key: 'billing.discount', value: tot && taka(tot.discount) },
-          { key: 'billing.bills', value: tot?.count },
-        ].map((c) => (
-          <div key={c.key} className="rounded-lg bg-white p-4 shadow-sm">
-            <div className="text-sm text-slate-500">{t(c.key)}</div>
-            <div className="text-2xl font-semibold">{c.value ?? '—'}</div>
-          </div>
-        ))}
+      <div className={`grid grid-cols-2 gap-4 lg:grid-cols-4 ${isFetching ? 'opacity-70' : ''}`}>
+        <StatCard icon={Banknote} tone="green" label={t('billing.collected')} value={tot ? taka(tot.paid) : '—'} />
+        <StatCard icon={Clock} tone="amber" label={t('billing.due')} value={tot ? taka(tot.due) : '—'} />
+        <StatCard icon={BadgePercent} tone="violet" label={t('billing.discount')} value={tot ? taka(tot.discount) : '—'} />
+        <StatCard icon={Receipt} tone="blue" label={t('billing.bills')} value={tot?.count ?? '—'} />
       </div>
 
       {tot && (

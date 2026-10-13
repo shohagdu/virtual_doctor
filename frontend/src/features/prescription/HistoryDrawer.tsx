@@ -17,8 +17,8 @@ export function HistoryDrawer({
   const { t } = useTranslation()
   return (
     <div className="fixed inset-0 z-30 print:hidden" role="dialog" aria-label={t('rx.previousVisits')}>
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <aside className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white shadow-xl">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} />
+      <aside className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white shadow-2xl">
         <div className="flex items-center border-b px-4 py-3">
           <h2 className="font-semibold">🕘 {t('rx.previousVisits')}</h2>
           <button onClick={onClose} className="ml-auto px-2 text-lg" aria-label={t('common.close')}>
@@ -79,7 +79,7 @@ function PastVisit({ visit: v, onCopy }: { visit: VisitSummary; onCopy: (m: Medi
           <button
             onClick={() => onCopy(chosen)}
             disabled={chosen.length === 0}
-            className="rounded bg-brand px-2 py-1 text-xs text-white disabled:opacity-50"
+            className="rounded-md bg-brand px-2 py-1 text-xs text-white disabled:opacity-50"
           >
             {chosen.length === meds.length ? t('rx.copyMedicines') : t('rx.copySelected', { n: chosen.length })}
           </button>
@@ -89,7 +89,7 @@ function PastVisit({ visit: v, onCopy }: { visit: VisitSummary; onCopy: (m: Medi
             href={`/visits/${v.id}/prescription`}
             target="_blank"
             rel="noreferrer"
-            className="rounded border px-2 py-1 text-xs text-brand"
+            className="rounded-md border px-2 py-1 text-xs text-brand"
           >
             {t('visits.viewRx')} ↗
           </a>

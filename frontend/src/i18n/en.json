@@ -23,7 +23,16 @@
     "waiting": "Waiting",
     "seen": "Seen",
     "followupsDue": "Follow-ups Due",
-    "queue": "Today's Queue"
+    "queue": "Today's Queue",
+    "morning": "Good morning, {{name}}",
+    "afternoon": "Good afternoon, {{name}}",
+    "evening": "Good evening, {{name}}",
+    "summary": "{{waiting}} waiting · {{seen}} seen today",
+    "inConsultation": "{{n}} with the doctor now",
+    "done": "{{pct}}% of today done",
+    "seenOf": "{{seen}} of {{today}} seen",
+    "emptyHint": "Add a patient with the search above, or mark an appointment as arrived.",
+    "allergy": "Allergy"
   },
   "patients": {
     "title": "Patients",
@@ -63,7 +72,14 @@
     "gynaeObs": "Gynae/Obs History",
     "vaccination": "Vaccination",
     "noClinicalAccess": "Medical history is not available for your role.",
-    "openTodayRx": "Today's ℞"
+    "openTodayRx": "Today's ℞",
+    "medicalProfile": "Medical profile",
+    "saving": "Saving…",
+    "notesPlaceholder": "Add notes…",
+    "inQueueToday": "In today's queue",
+    "totalVisits": "Visits",
+    "lastVisit": "Last visit",
+    "nextFollowup": "Next follow-up"
   },
   "visits": {
     "title": "Visits",
@@ -264,7 +280,8 @@
     "smsSent": "Confirmation SMS sent",
     "arrived": "Arrived",
     "inQueue": "In queue",
-    "upcoming": "Upcoming appointment"
+    "upcoming": "Upcoming appointment",
+    "free": "Free"
   },
   "followups": {
     "bucket": {
@@ -356,7 +373,15 @@
     "flagged": "flagged",
     "values": "Values",
     "trend": "Lab trend",
-    "oneValue": "Only one {{name}} result so far."
+    "oneValue": "Only one {{name}} result so far.",
+    "open": "Open report",
+    "newTab": "Open in new tab",
+    "download": "Download",
+    "view": "View",
+    "patientReports": "Patient reports",
+    "thisVisit": "This visit",
+    "nReports_one": "{{count}} report",
+    "nReports_other": "{{count}} reports"
   },
   "ai": {
     "possibleIssues": "Possible issues",
@@ -523,5 +548,53 @@
     "imported": "Imported: {{added}} added, {{updated}} updated.",
     "line": "Line {{n}}",
     "moreProblems": "…and {{count}} more problems"
+  },
+  "shell": {
+    "tagline": "Prescription & clinic",
+    "menu": "Menu",
+    "search": "Search patients by name, phone or ID…",
+    "allResults": "All {{count}} results",
+    "version": "Virtual Doctor · v1",
+    "role": {
+      "doctor": "Doctor",
+      "assistant": "Assistant",
+      "admin": "Admin"
+    },
+    "collapse": "Collapse menu",
+    "expand": "Expand menu"
+  },
+  "login": {
+    "headline": "Your chamber, one calm screen.",
+    "sub": "Queue, prescriptions, reports and follow-ups — in English and বাংলা.",
+    "f1": "Fast prescriptions with templates and repeat ℞",
+    "f2": "Appointments, follow-ups and SMS reminders",
+    "f3": "AI help with lab reports and patient history",
+    "welcome": "Welcome back",
+    "prompt": "Sign in to your clinic account",
+    "show": "Show password",
+    "hide": "Hide password"
+  },
+  "viewer": {
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "rotateLeft": "Rotate left",
+    "rotateRight": "Rotate right",
+    "reset": "Fit to screen"
+  },
+  "lists": {
+    "title": "Prescription lists",
+    "help": "Items offered in each prescription section and in the patient profile's Chronic Conditions. Doctors can still type anything else.",
+    "add": "Add",
+    "addPlaceholder": "Add an item — or paste many, one per line",
+    "pasteHint": "Enter adds · Shift+Enter for a new line · pasting a list adds every line",
+    "filter": "Filter…",
+    "remove": "Remove",
+    "empty": "No items yet.",
+    "saveHint": "Changes are saved with the Save button at the bottom of the page.",
+    "searchOrType": "Search the list or type…",
+    "addTyped": "Add",
+    "allAdded": "All items in the list are already added.",
+    "typeToAdd": "Type and press Enter to add.",
+    "done": "Done"
   }
 }

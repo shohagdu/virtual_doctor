@@ -1,5 +1,5 @@
 import { useDeferredValue, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { Card } from '../../components/Card'
@@ -13,7 +13,9 @@ import { PatientFormDialog } from './PatientFormDialog'
 
 export function PatientListPage() {
   const { t } = useTranslation()
-  const [q, setQ] = useState('')
+  // The top-bar search opens this page with ?q= (Enter in quick search).
+  const [params] = useSearchParams()
+  const [q, setQ] = useState(() => params.get('q') ?? '')
   const [page, setPage] = useState(1)
   const [showNew, setShowNew] = useState(false)
   const query = useDeferredValue(q)
@@ -41,7 +43,7 @@ export function PatientListPage() {
                   setAiQuery('')
                 }}
                 aria-pressed={aiMode}
-                className={`rounded px-3 py-1.5 text-sm ${aiMode ? 'bg-indigo-600 text-white' : 'border text-indigo-700'}`}
+                className={`rounded-md px-3 py-1.5 text-sm ${aiMode ? 'bg-indigo-600 text-white' : 'border text-indigo-700'}`}
               >
                 ✨ {t('ai.smartSearch')}
               </button>
@@ -58,10 +60,10 @@ export function PatientListPage() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder={t('ai.smartPlaceholder')}
-                  className="w-72 rounded border border-indigo-300 px-3 py-1.5 text-sm"
+                  className="w-72 rounded-md border border-indigo-300 px-3 py-1.5 text-sm"
                   maxLength={300}
                 />
-                <button className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white">{t('ai.search')}</button>
+                <button className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white">{t('ai.search')}</button>
               </form>
             ) : (
               <input
@@ -71,10 +73,10 @@ export function PatientListPage() {
                   setPage(1)
                 }}
                 placeholder={`🔍 ${t('patients.search')}`}
-                className="w-56 rounded border px-3 py-1.5 text-sm"
+                className="w-full min-w-0 rounded-lg border px-3 py-1.5 text-sm sm:w-56"
               />
             )}
-            <button onClick={() => setShowNew(true)} className="rounded bg-brand px-3 py-1.5 text-sm text-white">
+            <button onClick={() => setShowNew(true)} className="btn btn-primary btn-sm">
               ➕ {t('patients.new')}
             </button>
           </>
@@ -133,7 +135,7 @@ export function PatientListPage() {
           </table>
         </div>
         <div className={`mt-3 flex items-center justify-end gap-2 text-sm ${aiMode ? 'hidden' : ''}`}>
-          <button disabled={page <= 1} onClick={() => setPage(page - 1)} className="rounded border px-3 py-1 disabled:opacity-40">
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)} className="rounded-md border px-3 py-1 disabled:opacity-40">
             {t('common.prev')}
           </button>
           <span>
@@ -142,7 +144,7 @@ export function PatientListPage() {
           <button
             disabled={page >= lastPage}
             onClick={() => setPage(page + 1)}
-            className="rounded border px-3 py-1 disabled:opacity-40"
+            className="rounded-md border px-3 py-1 disabled:opacity-40"
           >
             {t('common.next')}
           </button>
@@ -169,7 +171,7 @@ function Understood({ filters: f }: { filters: SearchFilters }) {
     <p className="mb-2 flex flex-wrap gap-1 text-xs">
       <span className="text-slate-500">{t('ai.understood')}:</span>
       {parts.map((p) => (
-        <span key={p} className="rounded bg-indigo-50 px-1.5 text-indigo-800">
+        <span key={p} className="rounded-md bg-indigo-50 px-1.5 text-indigo-800">
           {p}
         </span>
       ))}

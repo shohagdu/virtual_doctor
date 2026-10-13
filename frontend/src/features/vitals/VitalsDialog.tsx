@@ -60,8 +60,8 @@ function VitalsForm({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
-      <form onSubmit={submit} className="w-full max-w-lg space-y-4 rounded-lg bg-white p-6 shadow-lg">
+    <div className="overlay">
+      <form onSubmit={submit} className="w-full max-w-lg space-y-4 dialog">
         <h2 className="text-lg font-semibold">{t('vitals.record')}</h2>
         <div className="grid grid-cols-2 gap-3">
           {FIELDS.map((f) => (
@@ -73,7 +73,7 @@ function VitalsForm({
                 step={f.step}
                 value={form[f.key]}
                 onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                className="mt-1 w-full rounded border px-3 py-1.5"
+                className="mt-1 w-full rounded-lg border px-3 py-1.5"
               />
             </label>
           ))}
@@ -85,10 +85,10 @@ function VitalsForm({
         )}
         {save.isError && <p className="text-sm text-red-600">{save.error.message}</p>}
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded border px-4 py-2">
+          <button type="button" onClick={onClose} className="btn btn-secondary">
             {t('patients.cancel')}
           </button>
-          <button disabled={save.isPending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-60">
+          <button disabled={save.isPending} className="btn btn-primary">
             {t('patients.save')}
           </button>
         </div>

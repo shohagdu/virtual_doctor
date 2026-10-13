@@ -2,7 +2,10 @@ import { useDeferredValue, useState, type DragEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { QueueEntry, VisitType } from '../../api/types'
+import { AlertTriangle, BellRing, CheckCircle2, Coffee, GripVertical, Hourglass, ListOrdered, UserPlus, Users } from 'lucide-react'
 import { Card } from '../../components/Card'
+import { PageHeader } from '../../components/PageHeader'
+import { StatCard } from '../../components/StatCard'
 import { StatusBadge } from '../../components/StatusBadge'
 import { ageText } from '../../utils/age'
 import { fullName } from '../../utils/patient'
@@ -15,56 +18,67 @@ import { VitalsDialog } from '../vitals/VitalsDialog'
 
 export function DashboardPage() {
   const { t } = useTranslation()
+  const user = useAuth((s) => s.user)
   const { data, isError, error } = useQueueToday()
   const [showNew, setShowNew] = useState(false)
+  const [hour] = useState(() => new Date().getHours())
   const c = data?.counters
-
-  const counters = [
-    { key: 'dashboard.today', value: c?.today },
-    { key: 'dashboard.waiting', value: c?.waiting },
-    { key: 'dashboard.seen', value: c?.seen },
-    { key: 'dashboard.followupsDue', value: c?.followups_due, to: '/followups' },
-  ]
+  const greeting = hour < 12 ? 'dashboard.morning' : hour < 17 ? 'dashboard.afternoon' : 'dashboard.evening'
+  const done = c && c.today > 0 ? Math.round((c.seen / c.today) * 100) : 0
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-lg font-semibold">{t('dashboard.title')}</h1>
-        <div className="ml-auto flex flex-wrap gap-2">
-          <AddToQueue />
-          <button onClick={() => setShowNew(true)} className="rounded bg-brand px-3 py-1.5 text-sm text-white">
-            ➕ {t('patients.new')}
-          </button>
-        </div>
+    <div className="space-y-6">
+      <PageHeader
+        title={t(greeting, { name: user?.name ?? '' })}
+        subtitle={c ? t('dashboard.summary', { waiting: c.waiting, seen: c.seen }) : t('dashboard.title')}
+        actions={
+          <>
+            <AddToQueue />
+            <button onClick={() => setShowNew(true)} className="btn btn-primary">
+              <UserPlus className="h-4 w-4" /> {t('patients.new')}
+            </button>
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard icon={Users} tone="blue" label={t('dashboard.today')} value={c?.today ?? '—'} />
+        <StatCard icon={Hourglass} tone="amber" label={t('dashboard.waiting')} value={c?.waiting ?? '—'}
+          hint={c && c.in_consultation > 0 ? t('dashboard.inConsultation', { n: c.in_consultation }) : undefined} />
+        <StatCard icon={CheckCircle2} tone="green" label={t('dashboard.seen')} value={c?.seen ?? '—'}
+          hint={c && c.today > 0 ? t('dashboard.done', { pct: done }) : undefined} />
+        <StatCard icon={BellRing} tone="violet" label={t('dashboard.followupsDue')} value={c?.followups_due ?? '—'} to="/followups" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {counters.map((x) => {
-          const body = (
-            <>
-              <div className="text-sm text-slate-500">{t(x.key)}</div>
-              <div className="text-2xl font-semibold">{x.value ?? '—'}</div>
-            </>
-          )
-          return x.to ? (
-            <Link key={x.key} to={x.to} className="rounded-lg bg-white p-4 shadow-sm hover:bg-slate-50">
-              {body}
-            </Link>
-          ) : (
-            <div key={x.key} className="rounded-lg bg-white p-4 shadow-sm">
-              {body}
-            </div>
-          )
-        })}
-      </div>
-
-      <Card title={t('dashboard.queue')}>
+      <Card
+        title={
+          <span className="flex items-center gap-2">
+            <ListOrdered className="h-5 w-5 text-brand" /> {t('dashboard.queue')}
+          </span>
+        }
+        actions={
+          c && c.today > 0 ? (
+            <span className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="h-1.5 w-28 overflow-hidden rounded-full bg-slate-100">
+                <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${done}%` }} />
+              </span>
+              {t('dashboard.seenOf', { seen: c.seen, today: c.today })}
+            </span>
+          ) : undefined
+        }
+      >
         {isError ? (
           <p className="text-red-600">{error.message}</p>
         ) : !data ? (
           <p className="text-slate-500">{t('common.loading')}</p>
         ) : data.items.length === 0 ? (
-          <p className="text-slate-500">{t('queue.empty')}</p>
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <Coffee className="h-7 w-7" />
+            </span>
+            <p className="font-medium text-slate-700">{t('queue.empty')}</p>
+            <p className="text-sm text-slate-500">{t('dashboard.emptyHint')}</p>
+          </div>
         ) : (
           <QueueTable items={data.items} />
         )}
@@ -86,7 +100,7 @@ function AddToQueue() {
   const open = query.length >= 2 && !!data
 
   return (
-    <div className="relative flex gap-2">
+    <div className="relative flex w-full gap-2 sm:w-auto">
       <input
         value={q}
         onChange={(e) => {
@@ -94,12 +108,12 @@ function AddToQueue() {
           add.reset()
         }}
         placeholder={`🔍 ${t('queue.searchToAdd')}`}
-        className="w-64 rounded border px-3 py-1.5 text-sm"
+        className="w-full min-w-0 rounded-lg border px-3 py-2 text-sm sm:w-64"
       />
       <select
         value={type}
         onChange={(e) => setType(e.target.value as VisitType)}
-        className="rounded border bg-white px-2 py-1.5 text-sm"
+        className="shrink-0 rounded-lg border bg-white px-2 py-2 text-sm"
         aria-label={t('queue.visitType')}
       >
         {(['new', 'followup', 'report'] as const).map((v) => (
@@ -109,7 +123,7 @@ function AddToQueue() {
         ))}
       </select>
       {open && (
-        <div className="absolute top-full z-20 mt-1 w-96 max-w-[90vw] rounded border bg-white shadow-lg">
+        <div className="absolute top-full z-20 mt-1 w-96 max-w-[90vw] rounded-md border bg-white shadow-lg">
           {add.isError && <p className="px-3 py-2 text-sm text-red-600">{add.error.message}</p>}
           {data.items.length === 0 ? (
             <p className="px-3 py-2 text-sm text-slate-500">{t('patients.empty')}</p>
@@ -126,7 +140,7 @@ function AddToQueue() {
                   <button
                     onClick={() => add.mutate({ patient_id: p.id, visit_type: type }, { onSuccess: () => setQ('') })}
                     disabled={add.isPending}
-                    className="rounded bg-brand px-2 py-1 text-xs text-white disabled:opacity-60"
+                    className="rounded-md bg-brand px-2 py-1 text-xs text-white disabled:opacity-60"
                   >
                     ➕ {t('profile.addToQueue')}
                   </button>
@@ -195,30 +209,46 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
                   onDrop={(e) => drop(e, v)}
                   className={`border-b last:border-0 ${v.status === 'cancelled' ? 'text-slate-400' : ''} ${
                     dragId === v.id ? 'opacity-50' : ''
-                  } ${v.status === 'in_consultation' ? 'bg-blue-50' : ''}`}
+                  } ${v.status === 'in_consultation' ? 'bg-brand-50/70' : ''}`}
                 >
-                  <td className="py-2 pr-3 whitespace-nowrap">
-                    {isWaiting && (
-                      <span className="mr-1 cursor-grab text-slate-400" title={t('queue.drag')}>
-                        ⠿
+                  <td className="py-3 pr-3 whitespace-nowrap">
+                    <span className="flex items-center gap-1">
+                      {isWaiting ? (
+                        <GripVertical className="h-4 w-4 cursor-grab text-slate-300" aria-label={t('queue.drag')} />
+                      ) : (
+                        <span className="w-4" />
+                      )}
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
+                          v.status === 'in_consultation'
+                            ? 'bg-brand text-white'
+                            : v.status === 'waiting'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {v.queue_serial}
                       </span>
-                    )}
-                    {v.queue_serial}
+                    </span>
                   </td>
-                  <td className="py-2 pr-3">
-                    <Link to={`/patients/${v.patient.id}`} className="text-brand hover:underline">
+                  <td className="py-3 pr-3">
+                    <Link to={`/patients/${v.patient.id}`} className="font-medium text-slate-900 hover:text-brand">
                       {fullName(v.patient)}
                     </Link>
                     {v.has_allergy && (
-                      <span className="ml-1 rounded bg-red-600 px-1 text-xs text-white" title={t('profile.allergies')}>
-                        ⚠
+                      <span
+                        className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-red-50 px-1.5 text-[11px] font-semibold text-red-700 ring-1 ring-red-200"
+                        title={t('profile.allergies')}
+                      >
+                        <AlertTriangle className="h-3 w-3" /> {t('dashboard.allergy')}
                       </span>
                     )}
+                    <span className="block text-xs text-slate-500">{v.patient.patient_code}</span>
                   </td>
-                  <td className="py-2 pr-3 whitespace-nowrap">
+                  <td className="py-3 pr-3 whitespace-nowrap">
                     {ageText(v.patient.dob)} / {v.patient.sex}
                   </td>
-                  <td className="py-2 pr-3">{v.patient.phone}</td>
+                  <td className="py-3 pr-3 whitespace-nowrap tabular-nums">{v.patient.phone}</td>
                   <td className="py-2 pr-3">{t(`visits.type.${v.visit_type}`)}</td>
                   <td className="py-2 pr-3">
                     <StatusBadge status={v.status} />
@@ -229,15 +259,15 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
                         <button
                           onClick={() => startRx(v)}
                           disabled={update.isPending}
-                          className={`rounded px-2 py-1 text-xs ${
-                            open ? 'bg-brand text-white' : 'border text-brand'
+                          className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
+                            open ? 'bg-brand text-white shadow-xs hover:bg-brand-dark' : 'border border-brand/30 text-brand hover:bg-brand-50'
                           } disabled:opacity-60`}
                         >
                           {isWaiting ? t('visits.startRx') : v.status === 'seen' ? t('queue.open') : `℞ ${t('queue.continue')}`}
                         </button>
                       )}
                       {role !== 'admin' && v.status !== 'cancelled' && (
-                        <button onClick={() => setVitalsFor(v)} className="rounded border px-2 py-1 text-xs">
+                        <button onClick={() => setVitalsFor(v)} className="rounded-md border px-2 py-1 text-xs">
                           {v.has_vitals ? '✔ ' : '➕ '}
                           {t('vitals.short')}
                         </button>
@@ -245,7 +275,7 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
                       {v.status !== 'cancelled' && (
                         <button
                           onClick={() => setBillFor(v)}
-                          className={`rounded border px-2 py-1 text-xs ${
+                          className={`rounded-md border px-2 py-1 text-xs ${
                             v.bill_status === 'paid'
                               ? 'border-green-600 text-green-700'
                               : v.bill_status === 'due'
@@ -265,7 +295,7 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
                           <button
                             onClick={() => move(v.id, idx - 1)}
                             disabled={idx === 0 || update.isPending}
-                            className="rounded border px-1.5 py-1 text-xs disabled:opacity-30"
+                            className="rounded-md border px-1.5 py-1 text-xs disabled:opacity-30"
                             aria-label={t('queue.moveUp')}
                           >
                             ▲
@@ -273,7 +303,7 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
                           <button
                             onClick={() => move(v.id, idx + 1)}
                             disabled={idx === waiting.length - 1 || update.isPending}
-                            className="rounded border px-1.5 py-1 text-xs disabled:opacity-30"
+                            className="rounded-md border px-1.5 py-1 text-xs disabled:opacity-30"
                             aria-label={t('queue.moveDown')}
                           >
                             ▼
@@ -293,7 +323,7 @@ function QueueTable({ items }: { items: QueueEntry[] }) {
                       {v.status === 'cancelled' && (
                         <button
                           onClick={() => update.mutate({ id: v.id, status: 'waiting' })}
-                          className="rounded border px-2 py-1 text-xs"
+                          className="rounded-md border px-2 py-1 text-xs"
                         >
                           ↺ {t('queue.restore')}
                         </button>

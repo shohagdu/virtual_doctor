@@ -28,7 +28,7 @@ export function MergeDialog({ patient, onClose }: { patient: Patient; onClose: (
   const merge = useMergePatients()
 
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
+    <div className="overlay">
       <div className="w-full max-w-3xl space-y-4 rounded-lg bg-white p-6 text-sm shadow-lg">
         <h2 className="text-lg font-semibold">⇄ {t('rxtools.mergeTitle')}</h2>
         {other === null ? (
@@ -37,10 +37,10 @@ export function MergeDialog({ patient, onClose }: { patient: Patient; onClose: (
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={`🔍 ${t('patients.search')}`}
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-md border px-3 py-2"
               autoFocus
             />
-            <ul className="max-h-72 divide-y overflow-y-auto rounded border">
+            <ul className="max-h-72 divide-y overflow-y-auto rounded-md border">
               {search.data?.items
                 .filter((p) => p.id !== patient.id)
                 .map((p) => (
@@ -66,10 +66,10 @@ export function MergeDialog({ patient, onClose }: { patient: Patient; onClose: (
               <SideCard side={preview.data.keep} label={`✔ ${t('rxtools.keep')}`} tone="border-green-500" />
               <SideCard side={preview.data.merge} label={`→ ${t('rxtools.mergeAway')}`} tone="border-slate-300" />
             </div>
-            <button onClick={() => setKeepCurrent(!keepCurrent)} className="rounded border px-3 py-1">
+            <button onClick={() => setKeepCurrent(!keepCurrent)} className="rounded-md border px-3 py-1">
               ⇄ {t('rxtools.swap')}
             </button>
-            <label className="flex items-start gap-2 rounded bg-amber-50 p-3 text-amber-900">
+            <label className="flex items-start gap-2 rounded-md bg-amber-50 p-3 text-amber-900">
               <input type="checkbox" checked={sure} onChange={(e) => setSure(e.target.checked)} className="mt-1" />
               {t('rxtools.mergeConfirm', { from: preview.data.merge.patient.patient_code, to: preview.data.keep.patient.patient_code })}
             </label>
@@ -83,12 +83,12 @@ export function MergeDialog({ patient, onClose }: { patient: Patient; onClose: (
                 setOther(null)
                 setSure(false)
               }}
-              className="mr-auto rounded border px-4 py-2"
+              className="mr-auto btn btn-secondary"
             >
               ← {t('rxtools.pickAnother')}
             </button>
           )}
-          <button onClick={onClose} className="rounded border px-4 py-2">
+          <button onClick={onClose} className="btn btn-secondary">
             {t('patients.cancel')}
           </button>
           <button
@@ -98,7 +98,7 @@ export function MergeDialog({ patient, onClose }: { patient: Patient; onClose: (
               onClose()
               navigate(`/patients/${keep}`)
             }}
-            className="rounded bg-red-600 px-4 py-2 text-white disabled:opacity-50"
+            className="btn btn-danger"
           >
             {t('rxtools.merge')}
           </button>
@@ -112,7 +112,7 @@ function SideCard({ side, label, tone }: { side: MergeSide; label: string; tone:
   const { t } = useTranslation()
   const p = side.patient
   return (
-    <section className={`space-y-1 rounded border-2 p-3 ${tone}`}>
+    <section className={`space-y-1 rounded-md border-2 p-3 ${tone}`}>
       <div className="text-xs font-semibold">{label}</div>
       <div>
         <b>{fullName(p)}</b> {p.name_bn && <span className="text-slate-500">({p.name_bn})</span>}
